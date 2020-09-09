@@ -1,0 +1,17 @@
+Package: iCAMP
+Type: Package
+Title: Infer Community Assembly Mechanisms by Phylogenetic-Bin-Based
+        Null Model Analysis
+Version: 1.2.8
+Date: 2020-09-01
+Author: Daliang Ning
+Maintainer: Daliang Ning <ningdaliang@ou.edu>
+Imports:
+        vegan,parallel,permute,ape,bigmemory,nortest,minpack.lm,Hmisc,stats4
+Depends: R (>= 3.5)
+Description: To implement a general framework to quantitatively infer Community Assembly Mechanisms by Phylogenetic-bin-based null model analysis, abbreviated as 'iCAMP' (Ning et al 2020) <doi:10.1101/2020.02.22.960872>. It can quantitatively assess the relative importance of different community assembly processes, such as selection, dispersal, and drift, for both communities and each phylogenetic group ('bin'). Each bin usually consists of different taxa from a family or an order. The package also provides functions to implement some other published methods, including neutral taxa percentage (Burns et al 2016) <doi:10.1038/ismej.2015.142> based on neutral theory model (Sloan et al 2006) <doi:10.1111/j.1462-2920.2005.00956.x> and quantifying assembly processes based on entire-community null models (Stegen et al 2013) <doi:10.1038/ismej.2013.93>. It also includes some handy functions, particularly for big datasets, such as phylogenetic and taxonomic null model analysis at both community and bin levels, between-taxa niche difference and phylogenetic distance calculation, phylogenetic signal test within phylogenetic groups, midpoint root of big trees, etc.
+License: GPL-2
+NeedsCompilation: no
+Packaged: 2020-09-01 22:20:22 UTC; ndl81
+Repository: CRAN
+Date/Publication: 2020-09-09 09:50:09 UTC

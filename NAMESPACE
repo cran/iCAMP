@@ -1,0 +1,4 @@
+exportPattern("^[[:alpha:]]+")
+import(vegan)
+import(ape)
+import(bigmemory)

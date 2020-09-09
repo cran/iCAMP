@@ -1,0 +1,19 @@
+dist.bin.3col<-function(dist.bin,obj.name=NULL)
+{
+  dist.3col<-function(dist)
+  {
+    dist=as.matrix(dist)
+    rowname=rownames(dist)
+    colname=colnames(dist)
+    rown=row(dist)
+    coln=col(dist)
+    dist.v=as.vector(stats::as.dist(dist))
+    rown.v=as.vector(stats::as.dist(rown))
+    coln.v=as.vector(stats::as.dist(coln))
+    res=data.frame(name1=rowname[rown.v],name2=colname[coln.v],dis=dist.v)
+    res
+  }
+  dist.3col=cbind(dist.3col(dist.bin[[1]]),sapply(2:length(dist.bin),function(i){dist.3col(dist.bin[[i]])[,3]}))
+  colnames(dist.3col)[3:ncol(dist.3col)]<-paste0(paste(c(obj.name,"bin"),collapse = "."),1:length(dist.bin))
+  dist.3col
+}
