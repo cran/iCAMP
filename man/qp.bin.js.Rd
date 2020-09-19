@@ -30,7 +30,7 @@ This function applied this framework to each phylogenetic bin and allowed to use
 Output is a matrix. The first two columns are sample IDs, and each row represent a turnover between two samples. From the third column, each column shows the relative importance of a community assembly process in each turnover (pairwise comparison between each pair of samples). 
 }
 \references{
-Ning, D., Yuan, M., Wu, L., Zhang, Y., Guo, X., Zhou, X. et al. (2020). A quantitative framework reveals the ecological drivers of grassland soil microbial community assembly in response to warming. bioRxiv. doi:10.1101/2020.02.22.960872 (Nature Communications, final revision).
+Ning, D., Yuan, M., Wu, L., Zhang, Y., Guo, X., Zhou, X. et al. (2020). A quantitative framework reveals ecological drivers of grassland microbial community assembly in response to warming. Nature Communications, 11, 4717.
 
 Stegen JC, Lin X, Fredrickson JK, Chen X, Kennedy DW, Murray CJ et al. 2013. Quantifying community assembly processes and identifying features that impose them. Isme Journal 7: 2069-2079.
 

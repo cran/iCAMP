@@ -6,20 +6,21 @@
 Infer Community Assembly Mechanisms by Phylogenetic-bin-based null model analysis
 }
 \description{
-This package is to implement a general framework to quantitatively infer Community Assembly Mechanisms by Phylogenetic-bin-based null model analysis, abbreviated as iCAMP (Ning et al 2020). It can quantitatively assess the relative importance of different community assembly processes, such as selection, dispersal, and drift, for both communities and each phylogenetic group ('bin'). Each bin usually consists of different taxa from a family or an order. The package also provides functions to implement some other published methods, including neutral taxa percentage (Burns et al 2016) based on neutral theory model (Sloan et al 2006) and quantifying assembly processes based on entire-community null models (Stegen et al 2013). It also includes quite a few handy functions, particularly for big datasets, such as phylogenetic and taxonomic null model analysis at both community and bin levels, between-taxa niche difference and phylogenetic distance calculation, phylogenetic signal test within phylogenetic groups, midpoint root of big trees, etc. 
+This package is to implement a general framework to quantitatively infer Community Assembly Mechanisms by Phylogenetic-bin-based null model analysis, abbreviated as iCAMP (Ning et al 2020). It can quantitatively assess the relative importance of different community assembly processes, such as selection, dispersal, and drift, for both communities and each phylogenetic group ('bin'). Each bin usually consists of different taxa from a family or an order. The package also provides functions to implement some other published methods, including neutral taxa percentage (Burns et al 2016) based on neutral theory model (Sloan et al 2006) and quantifying assembly processes based on entire-community null models (Stegen et al 2013). It also includes quite a few handy functions, particularly for big datasets, such as phylogenetic and taxonomic null model analysis at both community and bin levels, between-taxa niche difference and phylogenetic distance calculation, phylogenetic signal test within phylogenetic groups, midpoint root of big trees, etc. URL: https://github.com/DaliangNing/iCAMP1
 
 Version 1.2.4: the first formal version of iCAMP for CRAN.
 Version 1.2.5: correct typo in description and fix the error of memory.limit issue.
 Version 1.2.6: revise the help document of qpen to include an example for big datasets.
 Version 1.2.7: remove setwd in functions; add options to specify file names; change dontrun to donttest and revise save.wd in some help documents.
 Version 1.2.8: revise dniche to avoid unnecessary file.
+Version 1.2.9: update iCAMP paper newly published on Nature Communications and the GitHub link.
 }
 \details{
 \tabular{ll}{
 Package: \tab iCAMP\cr
 Type: \tab Package\cr
-Version: \tab 1.2.8\cr
-Date: \tab 2020-09-01\cr
+Version: \tab 1.2.9\cr
+Date: \tab 2020-09-19\cr
 License: \tab GPL-2\cr
 }
 }
@@ -27,7 +28,7 @@ License: \tab GPL-2\cr
 Daliang Ning <ningdaliang@ou.edu>
 }
 \references{
-Ning, D., Yuan, M., Wu, L., Zhang, Y., Guo, X., Zhou, X. et al. (2020). A quantitative framework reveals ecological drivers of grassland microbial community assembly in response to warming. bioRxiv. doi:10.1101/2020.02.22.960872 (Nature Communications, in revision).
+Ning, D., Yuan, M., Wu, L., Zhang, Y., Guo, X., Zhou, X. et al. (2020). A quantitative framework reveals ecological drivers of grassland microbial community assembly in response to warming. Nature Communications, 11, 4717.
 
 Burns, A.R., Stephens, W.Z., Stagaman, K., Wong, S., Rawls, J.F., Guillemin, K. et al. (2016). Contribution of neutral processes to the assembly of gut microbial communities in the zebrafish over host development. Isme Journal, 10, 655-664.
 

@@ -36,7 +36,7 @@ Output is a list.
 \item{state.united}{matrix, status of each final bin. bin.united.id.old, the ID of the largest strict bin in each final bin; bin.united.tax.num, taxa number in each final bin; bin.pd.max, bin.pd.mean, and bin.pd.sd, the maximum, mean, and standard deviation of the pairwise phylogenetic distances in each strict bin.}
 }
 \references{
-Ning, D., Yuan, M., Wu, L., Zhang, Y., Guo, X., Zhou, X. et al. (2020). A quantitative framework reveals the ecological drivers of grassland soil microbial community assembly in response to warming. bioRxiv. doi:10.1101/2020.02.22.960872 (Nature Communications, final revision).
+Ning, D., Yuan, M., Wu, L., Zhang, Y., Guo, X., Zhou, X. et al. (2020). A quantitative framework reveals ecological drivers of grassland microbial community assembly in response to warming. Nature Communications, 11, 4717.
 
 Kane, M.J., Emerson, J., & Weston, S. (2013). Scalable Strategies for Computing with Massive Data. Journal of Statistical Software, 55(14), 1-19. URL http://www.jstatsoft.org/v55/i14/.
 }
