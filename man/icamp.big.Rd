@@ -111,6 +111,8 @@ Kane, M.J., Emerson, J., Weston, S. (2013). Scalable Strategies for Computing wi
 Daliang Ning
 }
 \note{
+Version 8: 2020.10.15, input comm as data.frame may return error, now include as.matrix to solve it.
+Version 7: 2020.9.21, fix minor bug when output.wd is NULL.
 Version 6: 2020.9.1, remove setwd; add options to specify some file names; change dontrun to donttest and revise save.wd in help doc.
 Version 5: 2020.8.19, update help document, add example.
 Version 4: 2020.5.31.

@@ -293,7 +293,8 @@ icamp.bins<-function(icamp.detail,treat=NULL,clas=NULL,silent=FALSE,
                                      
                                      rabij=sapply(1:length(levij),function(k){sum(rabi[which(clasij==levij[k])])})
                                      
-                                     idij.named=which(!grepl("unclass",tolower(levij)))
+                                     idij.named=which((!grepl("unclass",levij))&(!grepl("Unclass",levij)))
+                                     #idij.named=which(!grepl("unclass",tolower(levij)))
                                      if(length(idij.named)==0)
                                      {
                                        out=c(levij[which.max(rabij)],max(rabij)/sum(rabij))

@@ -48,11 +48,11 @@ bmntd<-function(comm, pd, abundance.weighted = TRUE,
     }
     comm.p[rowSums(comm)==0,]=0
     time3=Sys.time()
-    res=comt %*% (t(comm.p))
+    res=(as.matrix(comt)) %*% (t(comm.p))
     time4=Sys.time()
     res=(res+t(res))/2
   }else{
-    res=comt %*% (t(com.10))
+    res=(as.matrix(comt)) %*% (t(com.10))
     time3=Sys.time()
     samp.n=rowSums(com.10)
     com.n=matrix(samp.n,nrow = N,ncol = N)

@@ -65,14 +65,15 @@ Kane, M.J., Emerson, J., & Weston, S. (2013). Scalable Strategies for Computing 
 Daliang Ning
 }
 \note{
-Version 3: 2020.9.1, remove setwd; change dontrun to donttest and revise save.wd in help doc.
+Version 6: 2020.12.5, use function bNTI.big to calculate betaNTI, which use bigmemory better.
+Version 5: 2020.9.1, remove setwd; change dontrun to donttest and revise save.wd in help doc.
 Version 4: 2020.8.21, update help document, add example.
 Version 3: 2016.2.15, add options to use bigmemory to handle large phylogenetic distance matrixes.
 Version 2: 2015.11.22
 }
 
 \seealso{
-\code{\link{bNTIn.p}}, \code{\link{bNTI.bin.big}}, \code{\link{RC.pc}}
+\code{\link{bNTIn.p}}, \code{\link{bNTI.big}}, \code{\link{RC.pc}}
 }
 
 \examples{

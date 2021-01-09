@@ -3,8 +3,8 @@ mpdn<-function(comm, pd, abundance.weighted = TRUE, time.output=FALSE)
   if(sum(colnames(comm)!=rownames(pd))>0)
   {
     sp.name=intersect(colnames(comm),rownames(pd))
-    comm=comm[,match(sp.name,colnames(comm))]
-    pd=pd[match(sp.name,rownames(pd)),match(sp.name,rownames(pd))]
+    comm=comm[,match(sp.name,colnames(comm)),drop=FALSE]
+    pd=pd[match(sp.name,rownames(pd)),match(sp.name,rownames(pd)),drop=FALSE]
   }
   comt=comm
   if(!abundance.weighted)

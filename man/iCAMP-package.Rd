@@ -14,13 +14,19 @@ Version 1.2.6: revise the help document of qpen to include an example for big da
 Version 1.2.7: remove setwd in functions; add options to specify file names; change dontrun to donttest and revise save.wd in some help documents.
 Version 1.2.8: revise dniche to avoid unnecessary file.
 Version 1.2.9: update iCAMP paper newly published on Nature Communications and the GitHub link.
+Version 1.2.10: fix minor bug when output.wd is NULL in icamp.big.
+Version 1.2.11: fix minor bug in icamp.big when comm is data.frame.
+Version 1.3.1: add bNTI.big and bMNTD.big, and revise qpen to handle big datasets better.
+Version 1.3.2: revise icamp.bins to fix error when an input taxonomy name has unrecognizable character; revise icamp.boot to fix error when there is no outlier.
+Version 1.3.3: add icamp.cate to summary for each category of taxa, e.g. core versus rare taxa.
+Version 1.3.4: typo and format.
 }
 \details{
 \tabular{ll}{
 Package: \tab iCAMP\cr
 Type: \tab Package\cr
-Version: \tab 1.2.9\cr
-Date: \tab 2020-09-19\cr
+Version: \tab 1.3.4\cr
+Date: \tab 2021-1-8\cr
 License: \tab GPL-2\cr
 }
 }

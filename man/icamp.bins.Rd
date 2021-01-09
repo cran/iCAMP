@@ -41,6 +41,7 @@ Ning, D., Yuan, M., Wu, L., Zhang, Y., Guo, X., Zhou, X. et al. (2020). A quanti
 Daliang Ning
 }
 \note{
+Version 3: 2021.1.5, fix the error when a tanoxomy name has unrecognizable character.
 Version 2: 2020.8.19, update help document, add example.
 Version 1: 2019.12.11
 }

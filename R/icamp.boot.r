@@ -117,10 +117,18 @@ icamp.boot<-function(icamp.result,treat,rand.time=1000,
                   data.frame(treat=names(pi.bt)[i],process=procn,btiss)
                 })
   btsum=data.frame(rbindlist(bt.sum),stringsAsFactors = FALSE)
-  colnames(btsum)=c("Group","Process","Observed","Mean","Stdev",
-                    "Min","Quartile25","Median","Quartile75","Max",
-                    "Lower.whisker","Lower.hinge","Median","Upper.hinge","Upper.whisker",
-                    paste0("Outlier",1:(ncol(btsum)-15)))
+  if(ncol(btsum)>15)
+  {
+    colnames(btsum)=c("Group","Process","Observed","Mean","Stdev",
+                      "Min","Quartile25","Median","Quartile75","Max",
+                      "Lower.whisker","Lower.hinge","Median","Upper.hinge","Upper.whisker",
+                      paste0("Outlier",1:(ncol(btsum)-15)))
+  }else{
+    colnames(btsum)=c("Group","Process","Observed","Mean","Stdev",
+                      "Min","Quartile25","Median","Quartile75","Max",
+                      "Lower.whisker","Lower.hinge","Median","Upper.hinge","Upper.whisker")
+  }
+  
   if(compare)
   {
     btsig<-function(x,y)

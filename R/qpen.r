@@ -69,18 +69,14 @@ qpen<-function(comm=NULL,pd=NULL,pd.big.wd=NULL,pd.big.spname=NULL,tree=NULL,bNT
       bMNTD.rand=bNTI.M$rand
       gc()
     }else{
-      pdid.bin=list(1:length(pd.big.spname))
-      sp.bin=matrix(1,nrow=length(pd.big.spname),ncol=1)
-      rownames(sp.bin)=pd.big.spname
-      bNTI.M=iCAMP::bNTI.bin.big(comm=comm, pd.desc=pd, pd.spname=pd.big.spname,
-                                 pd.wd=pd.big.wd, pdid.bin=pdid.bin, sp.bin=sp.bin,
-                                 spname.check=FALSE,nworker=nworker, memo.size.GB=memory.G,
-                                 weighted=ab.weight,rand=rand.time,output.bMNTD=TRUE,
-                                 sig.index="SES",unit.sum=NULL, correct.special=FALSE,
-                                 detail.null=TRUE, exclude.conspecifics = exclude.conspecifics)
-      bNTI=bNTI.M$index[[1]]
-      bMNTD=bNTI.M$betaMNTD.obs[[1]]
-      bMNTD.rand=bNTI.M$rand[[1]]
+      bNTI.M=iCAMP::bNTI.big(comm=comm, meta.group=NULL, pd.desc=pd,
+                             pd.spname=pd.big.spname,pd.wd=pd.big.wd, spname.check=TRUE,
+                             nworker=nworker, memo.size.GB=memory.G, weighted=ab.weight,
+                             exclude.consp=exclude.conspecifics,rand=rand.time,output.dtail=TRUE,
+                             RC=FALSE, trace=TRUE)
+      bNTI=bNTI.M$bNTI
+      bMNTD=bNTI.M$bMNTD
+      bMNTD.rand=bNTI.M$bMNTD.rand
       gc()
     }
   }else{
@@ -90,9 +86,9 @@ qpen<-function(comm=NULL,pd=NULL,pd.big.wd=NULL,pd.big.spname=NULL,tree=NULL,bNT
   if(is.null(RC))
   {
     rc.m<-RC.pc(comm=comm,rand=rand.time,na.zero=TRUE,nworker=nworker,
-                          memory.G=memory.G,weighted=ab.weight,unit.sum=NULL,
-                          meta.ab=meta.ab,sig.index="RC",
-                          detail.null=TRUE,output.bray=TRUE)
+                memory.G=memory.G,weighted=ab.weight,unit.sum=NULL,
+                meta.ab=meta.ab,sig.index="RC",
+                detail.null=TRUE,output.bray=TRUE)
     BC=rc.m$BC.obs
     RC=rc.m$index
     BC.rand=rc.m$rand
@@ -142,8 +138,10 @@ qpen<-function(comm=NULL,pd=NULL,pd.big.wd=NULL,pd.big.spname=NULL,tree=NULL,bNT
   if(save.bNTIRC){utils::write.csv(bNTI.RC,file=paste0(wd,"/",project,".QPEN.detail.csv"))}
   end=Sys.time()
   end.size=utils::memory.size()
-  setting=data.frame(project=project,ab.weighted=ab.weight,rand.time=rand.time,exclude.conspecifics=exclude.conspecifics,nworker=nworker,memory.set=paste(memory.G,"Gb",sep=" "),memory.use=paste((end.size-begin.size),"Mb",sep=" "),time.use=(end-begin))
-  
+  setting=data.frame(project=project,ab.weighted=ab.weight,
+                     rand.time=rand.time,exclude.conspecifics=exclude.conspecifics,
+                     nworker=nworker,memory.set=paste(memory.G,"Gb",sep=" "),
+                     memory.use=paste((end.size-begin.size),"Mb",sep=" "),time.use=(end-begin))
   if(!output.detail){output=list(ratio=res,result=bNTI.RC)}else{output=list(ratio=res,result=bNTI.RC,pd=pd,bMNTD=bMNTD,BC=BC,bMNTD.rand=bMNTD.rand,BC.rand=BC.rand,setting=setting)}
   output
 }

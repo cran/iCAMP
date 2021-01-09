@@ -3,8 +3,8 @@ bmpd<-function(comm, pd, abundance.weighted = TRUE, na.zero=TRUE, time.output=FA
   if(sum(colnames(comm)!=rownames(pd))>0)
   {
     sp.name=intersect(colnames(comm),rownames(pd))
-    comm=comm[,match(sp.name,colnames(comm))]
-    pd=pd[match(sp.name,rownames(pd)),match(sp.name,rownames(pd))]
+    comm=comm[,match(sp.name,colnames(comm)),drop=FALSE]
+    pd=pd[match(sp.name,rownames(pd)),match(sp.name,rownames(pd)),drop=FALSE]
   }
   comt=comm
   if(!abundance.weighted){comt[comt>0]=1}
@@ -21,7 +21,7 @@ bmpd<-function(comm, pd, abundance.weighted = TRUE, na.zero=TRUE, time.output=FA
   comt=as.matrix(comt)
   pd=as.matrix(pd)
   time2=Sys.time()
-  comd=comt %*% pd
+  comd=(as.matrix(comt)) %*% pd
   time3=Sys.time()
   res=comd %*% t(comt)
   time4=Sys.time()

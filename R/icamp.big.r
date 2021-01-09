@@ -15,6 +15,10 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                     pd.backingfile="pd.bin", pd.desc.file="pd.desc")
 {
   # v20200725 add sig.index, conf.cut, detail.null
+  comm.old=comm
+  comm=as.matrix(comm.old)
+  if(sum(comm!=comm.old)>0){stop("Strangely, comm changed after using as.matrix. Please check the comm.")}
+  
   t1=Sys.time()
   phylo.rand.scale=phylo.rand.scale[1]
   taxa.rand.scale=taxa.rand.scale[1]
@@ -492,11 +496,12 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
   {
     detail$processes=res
     if(is.null(unit.sum)){unit.sum.sv="asNULL"}else{unit.sum.sv=mean(unit.sum)}
+    if(is.null(output.wd)){output.wdout="Not_Specified"}else{output.wdout=output.wd}
     detail$setting=data.frame(ds=ds, pd.cut=pd.cut, max.pd=maxpd, sp.check=sp.check,
                               phylo.rand.scale=phylo.rand.scale,taxa.rand.scale=taxa.rand.scale,
                               phylo.metric=phylo.metric,sig.index=sig.index,bin.size.limit=bin.size.limit,nworker=nworker,memory.G=memory.G,
                               rtree.save=rtree.save,detail.save=detail.save,qp.save=qp.save,detail.null=detail.null,ignore.zero=ignore.zero,
-                              output.wd=output.wd,correct.special=correct.special,
+                              output.wd=output.wdout,correct.special=correct.special,
                               unit.sum.mean=unit.sum.sv,special.method=special.method,
                               ses.cut = ses.cut,rc.cut = rc.cut,conf.cut=conf.cut,
                               omit.option=omit.option[1],time=format(Sys.time()-t1))
@@ -507,7 +512,7 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
   {
     res=c(res,list(rand=detail.rand,special.crct=detail.special))
   }
-  if(detail.save){save(res,file = paste(output.wd,"/",prefix,".iCAMP.",sig.index,".detail.rda",sep=""))}
+  if(detail.save & (!is.null(output.wd))){save(res,file = paste(output.wd,"/",prefix,".iCAMP.",sig.index,".detail.rda",sep=""))}
   print(format(Sys.time()-t1))
   res
 }
