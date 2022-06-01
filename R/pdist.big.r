@@ -10,7 +10,7 @@ pdist.big<-function(tree,wd=getwd(),tree.asbig=FALSE,output=FALSE,
     if(utils::memory.limit()<memory.G*1024)
     {
       memotry=try(utils::memory.limit(size=memory.G*1024),silent = TRUE)
-      if(class(memotry)=="try-error"){warning(memotry[1])}
+      if(inherits(memotry,"try-error")){warning(memotry[1])}
     }
   }
   
@@ -50,7 +50,9 @@ pdist.big<-function(tree,wd=getwd(),tree.asbig=FALSE,output=FALSE,
       pathx
     }
     
-    c1<-parallel::makeCluster(nworker,type="PSOCK")
+    c1<-try(parallel::makeCluster(nworker,type="PSOCK"))
+    if(inherits(c1,"try-error")){c1 <- try(parallel::makeCluster(nworker, setup_timeout = 0.5))}
+    if(inherits(c1,"try-error")){c1 <- parallel::makeCluster(nworker, setup_strategy = "sequential")}
     message("Now computing path. begin at ", date(),". Please wait...")
     path<-parallel::parLapply(c1,1:tip.num,pathf1,tr=paste0(wd,"/",tree.desc.file))
     parallel::stopCluster(c1)
@@ -78,7 +80,9 @@ pdist.big<-function(tree,wd=getwd(),tree.asbig=FALSE,output=FALSE,
     if(tip.num>(5*nworker))
     {
       t1=Sys.time()
-      c1<-parallel::makeCluster(nworker,type="PSOCK")
+      c1<-try(parallel::makeCluster(nworker,type="PSOCK"))
+      if(inherits(c1,"try-error")){c1 <- try(parallel::makeCluster(nworker, setup_timeout = 0.5))}
+      if(inherits(c1,"try-error")){c1 <- parallel::makeCluster(nworker, setup_strategy = "sequential")}
       t2=Sys.time();tmkc=as.numeric(difftime(t2,t1,units = "hours"))
       message("Setting parallel cluster for path computing cost ",format(t2-t1),".  ",date())
       path=list()
@@ -91,7 +95,9 @@ pdist.big<-function(tree,wd=getwd(),tree.asbig=FALSE,output=FALSE,
       t.total=tmkc+((tpara/5)*(ceiling(tip.num/nworker)-5))+tclose
       message("Path computing by parallel may take ", t.total," hours. ",date())
       t5=Sys.time()
-      c2<-parallel::makeCluster(nworker,type="PSOCK")
+      c2<-try(parallel::makeCluster(nworker,type="PSOCK"))
+      if(inherits(c2,"try-error")){c2 <- try(parallel::makeCluster(nworker, setup_timeout = 0.5))}
+      if(inherits(c2,"try-error")){c2 <- parallel::makeCluster(nworker, setup_strategy = "sequential")}
       message("Now computing path for the rest ",tip.num-(5*nworker)," tips. begin at ", date(),". Please wait...")
       path[(5*nworker+1):tip.num]<-parallel::parLapply(c2,(5*nworker+1):tip.num,pathf,edge=edge,edge.len=edge.len)
       parallel::stopCluster(c2)
@@ -99,7 +105,9 @@ pdist.big<-function(tree,wd=getwd(),tree.asbig=FALSE,output=FALSE,
       message("Computing path for the rest ",tip.num-(5*nworker)," tips actually took ", format(Sys.time()-t5),". ",date())
     }else{
       t5=Sys.time()
-      c1<-parallel::makeCluster(nworker,type="PSOCK")
+      c1<-try(parallel::makeCluster(nworker,type="PSOCK"))
+      if(inherits(c1,"try-error")){c1 <- try(parallel::makeCluster(nworker, setup_timeout = 0.5))}
+      if(inherits(c1,"try-error")){c1 <- parallel::makeCluster(nworker, setup_strategy = "sequential")}
       message("Now computing path. begin at ", date(),". Please wait...")
       path<-parallel::parLapply(c1,1:tip.num,pathf,edge=edge,edge.len=edge.len)
       parallel::stopCluster(c1)
@@ -137,7 +145,9 @@ pdist.big<-function(tree,wd=getwd(),tree.asbig=FALSE,output=FALSE,
   if((tip.num-1)>(5*nworker.pd))
   {
     t1=Sys.time()
-    c3<-parallel::makeCluster(nworker.pd,type="PSOCK")
+    c3<-try(parallel::makeCluster(nworker.pd,type="PSOCK"))
+    if(inherits(c3,"try-error")){c3 <- try(parallel::makeCluster(nworker.pd, setup_timeout = 0.5))}
+    if(inherits(c3,"try-error")){c3 <- parallel::makeCluster(nworker.pd, setup_strategy = "sequential")}
     t2=Sys.time();tmkc=as.numeric(difftime(t2,t1,units = "hours"))
     message("Setting parallel cluster for pdist computing cost ",format(t2-t1),".  ",date())
     pd.cal=list()
@@ -151,14 +161,18 @@ pdist.big<-function(tree,wd=getwd(),tree.asbig=FALSE,output=FALSE,
     t.total=tmkc+((tpara/5)*tfactor)+tclose
     message("The rest Pdist computing by parallel may take ", t.total," hours. ",date())
     t5=Sys.time()
-    c4<-parallel::makeCluster(nworker.pd,type="PSOCK")
+    c4<-try(parallel::makeCluster(nworker.pd,type="PSOCK"))
+    if(inherits(c4,"try-error")){c4 <- try(parallel::makeCluster(nworker.pd, setup_timeout = 0.5))}
+    if(inherits(c4,"try-error")){c4 <- parallel::makeCluster(nworker.pd, setup_strategy = "sequential")}
     pd.cal[(5*nworker.pd+1):(tip.num-1)]<-parallel::parLapply(c4,(5*nworker.pd+1):(tip.num-1),pdf,tip.num=tip.num,path=path, pdsc=paste0(wd,"/",pd.desc.file))
     parallel::stopCluster(c4)
     gc()
     message("Computing pdist for the rest ",tip.num-(5*nworker.pd)," tips actually took ", format(Sys.time()-t5),". ",date())
   }else{
     t5=Sys.time()
-    c3<-parallel::makeCluster(nworker.pd,type="PSOCK")
+    c3<-try(parallel::makeCluster(nworker.pd,type="PSOCK"))
+    if(inherits(c3,"try-error")){c3 <- try(parallel::makeCluster(nworker.pd, setup_timeout = 0.5))}
+    if(inherits(c3,"try-error")){c3 <- parallel::makeCluster(nworker.pd, setup_strategy = "sequential")}
     message("Now computing pdist. begin at ", date(),". Please wait...")
     pd.cal<-parallel::parLapply(c3,1:(tip.num-1),pdf,tip.num=tip.num,path=path, pdsc=paste0(wd,"/",pd.desc.file))
     parallel::stopCluster(c3)

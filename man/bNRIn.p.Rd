@@ -12,7 +12,8 @@ bNRIn.p(comm, dis, nworker = 4, memo.size.GB = 50,
         sig.index = c("SES", "Confidence", "RC", "bNRI"),
         unit.sum = NULL, correct.special = FALSE, detail.null = FALSE,
         special.method = c("MPD", "MNTD", "both"),
-        ses.cut = 1.96, rc.cut = 0.95, conf.cut = 0.975)
+        ses.cut = 1.96, rc.cut = 0.95, conf.cut = 0.975,
+        dirichlet = FALSE)
 }
 \arguments{
   \item{comm}{matrix or data.frame, community data, each row is a sample or site, each colname is a species or OTU or gene, thus rownames should be sample IDs, colnames should be taxa IDs.}
@@ -30,6 +31,7 @@ bNRIn.p(comm, dis, nworker = 4, memo.size.GB = 50,
   \item{ses.cut}{numeric, the cutoff of significant standard effect size, default is 1.96.}
   \item{rc.cut}{numeric, the cutoff of significant modified Raup-Crick metric, default is 0.95.}
   \item{conf.cut}{numeric, the cutoff of significant one-side confidence level, default is 0.975.}
+  \item{dirichlet}{Logic. If TRUE, the taxonomic null model for correcting special cases will use Dirichlet distribution to generate relative abundances in randomized community matrix. default is FALSE.}
 }
 \details{
 The beta net relatedness index (betaNRI; Webb et al. 2008, Stegen et al. 2012) is a standardized measure of the mean pairwise distance between samples/communities (betaMPD). Parallel computing is used to improve the speed.
@@ -64,13 +66,14 @@ Ning, D., Yuan, M., Wu, L., Zhang, Y., Guo, X., Zhou, X. et al. (2020). A quanti
 Daliang Ning
 }
 \note{
+Version 5: 2021.4.18, fix the bug when detail.null=TRUE and comm has only two samples.
 Version 4: 2020.8.18, update help document, add example.
 Version 3: 2020.8.1, change RC opiton to sig.index, add detail.null and conf.cut. 
 Version 2: 2018.10.3, correct special cases
 Version 1: 2016.3.26.
 }
 \seealso{
-\code{\link{bmpd}}
+\code{\link{bmpd}}, \code{\link{bNRI.cm}}
 }
 \examples{
 data("example.data")

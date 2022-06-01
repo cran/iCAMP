@@ -11,7 +11,10 @@ tree.droot<-function(tree,range=NA,nworker=4,output.path=FALSE)
   droot<-function(i,path){sum(path[[i]][[2]])}
   
   requireNamespace("parallel")
-  c1<-parallel::makeCluster(nworker,type="PSOCK")
+  c1<-try(parallel::makeCluster(nworker,type="PSOCK"))
+  if(inherits(c1,"try-error")){c1 <- try(parallel::makeCluster(nworker, setup_timeout = 0.5))}
+  if(inherits(c1,"try-error")){c1 <- parallel::makeCluster(nworker, setup_strategy = "sequential")}
+  
   message("Now computing dist to root. begin at ", date(),". Please wait...")
   dr<-parallel::parSapply(c1,1:length(path),droot,path=path)
   parallel::stopCluster(c1)

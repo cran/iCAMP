@@ -33,6 +33,7 @@ Ning, D., Yuan, M., Wu, L., Zhang, Y., Guo, X., Zhou, X. et al. (2020). A quanti
 Daliang Ning
 }
 \note{
+Version 3: 2021.5.24, set NA if a cate has no taxon in a turnover; solve the problem that group means of different processes do not add up to 1.
 Version 2: 2021.1.7, add help document; fixed NAN error.
 Version 1: 2020.12.9.
 }

@@ -114,7 +114,7 @@ match.name<-function(name.check=integer(0),rn.list=list(integer(0)),cn.list=list
   if(length(lntn.list)>0)
   {
     tot.mis=sum(sapply(lntn.list, function(oldname,name.check){if(length(oldname)==length(name.check)){sum(oldname!=name.check)}else{1}},name.check=name.check))
-  }
+  }else{tot.mis=0}
   if(length(tname.list)>0)
   {
     tot.mis=tot.mis+sum(sapply(tname.list, function(oldname,name.check){sum(!(name.check %in% oldname))+sum(!(oldname %in% name.check))},name.check=name.check))

@@ -45,6 +45,7 @@ Kane, M.J., Emerson, J., & Weston, S. (2013). Scalable Strategies for Computing 
 Daliang Ning
 }
 \note{
+Version 4: 2021.5.24, debug to avoid the dimnames issue.
 Version 3: 2020.9.1, remove setwd; change dontrun to donttest and revise save.wd in help doc.
 Version 2: 2020.8.18, update help document, add example.
 Version 1: 2020.5.15
@@ -63,13 +64,17 @@ tree=example.data$tree
 # but you may test the code on your computer
 # after change the folder path for 'save.wd'.
 \donttest{
-  save.wd=tempdir() # please change to the folder you want to save the big niche difference matrix.
+  wd0=getwd()
+  save.wd=paste0(tempdir(),"/pdbig.ps.bin")
+  # please change to the folder you want to save the big niche difference matrix.
+  
   nworker=2 # parallel computing thread number
+  pd.big=pdist.big(tree = tree, wd=save.wd, nworker = nworker)
+    
   niche.dif=dniche(env = env, comm = comm,
                    method = "niche.value", nworker = nworker,
                    out.dist=FALSE,bigmemo=TRUE,nd.wd = save.wd,
                    nd.spname.file="nd.names.csv")
-  pd.big=pdist.big(tree = tree, wd=save.wd, nworker = nworker)
   
   ds = 0.2 # setting can be changed to explore the best choice
   bin.size.limit = 5 # setting can be changed to explore the best choice.
@@ -83,7 +88,11 @@ tree=example.data$tree
   sp.bin=phylobin$sp.bin[,3,drop=FALSE]
   
   sp.ra=colMeans(comm/rowSums(comm))
-  abcut=3 # you may remove some species, if they are too rare to perform reliable correlation test.
+  abcut=3
+  # by abcut, you may remove some species,
+  # if they are too rare to perform reliable correlation test.
+  
+  
   commc=comm[,colSums(comm)>=abcut,drop=FALSE]
   dim(commc)
   spname.use=colnames(commc)
@@ -93,6 +102,7 @@ tree=example.data$tree
                pd.wd = pd.big$pd.wd, nd.list = niche.dif$nd,
                nd.spname = niche.dif$names, ndbig.wd = niche.dif$nd.wd,
                cor.method = "pearson",r.cut = 0.1, p.cut = 0.05, min.spn = 5)
+  setwd(wd0)
 }
 }
 \keyword{phylogenetic signal}

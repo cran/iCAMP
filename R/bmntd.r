@@ -1,12 +1,18 @@
 bmntd<-function(comm, pd, abundance.weighted = TRUE,
                 exclude.conspecifics = FALSE,time.output=FALSE,
-                unit.sum=NULL)
+                unit.sum=NULL,spname.check=TRUE,silent=TRUE)
 {
-  if(sum(colnames(comm)!=colnames(pd))>0)
+  if(spname.check)
   {
-    sp.name=colnames(pd)
-    comm=comm[,match(sp.name,colnames(comm))]
+    spc=iCAMP::match.name(cn.list = list(comm=comm),both.list = list(pd=pd),silent = silent)
+    comm=spc$comm
+    pd=spc$pd
   }
+  #if(sum(colnames(comm)!=colnames(pd))>0)
+  #{
+  #  sp.name=colnames(pd)
+  # comm=comm[,match(sp.name,colnames(comm))]
+  #}
   comt=comm
   comt[comt>0]=1
   if(!abundance.weighted){com.10=comt}

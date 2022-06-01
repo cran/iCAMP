@@ -139,7 +139,7 @@ icamp.boot<-function(icamp.result,treat,rand.time=1000,
       ym=as.vector(matrix(y[2:length(y)],nrow=length(x)-1,ncol = length(y)-1,byrow = TRUE))
       xyd=xm-ym
       rd=obs.dif/(max(abs(c(x[1],y[1]))))
-      cohd=cohend(treat = x,control = y)
+      cohd=cohend(treat = x[!is.na(x)],control = y[!is.na(y)])
       if(obs.dif>0)
       {
         p=sum(xyd<=EPS,na.rm = TRUE)/(sum(!is.na(xyd))+1)

@@ -55,7 +55,7 @@ snm<-function(comm,meta.com=NULL,taxon=NULL,alpha=0.05,simplify=FALSE)
   if(!simplify)
   {
     m.ci <- try(stats::confint(m.fit, 'm', level=(1-alpha)))
-    if(class(m.ci)=="try-error") m.ci=c(NA,NA)
+    if(inherits(m.ci,"try-error")) m.ci=c(NA,NA)
   }
   
   
@@ -68,7 +68,7 @@ snm<-function(comm,meta.com=NULL,taxon=NULL,alpha=0.05,simplify=FALSE)
       -sum(log(R))
     }
     m.mle <- try(stats4::mle(sncm.LL, start=list(m=0.1, sigma=0.1), nobs=length(p)))
-    if(class(m.mle)=="try-error"){aic.fit<-bic.fit<-m.mle.coef<-m.maxll<-NA}else{
+    if(inherits(m.mle,"try-error")){aic.fit<-bic.fit<-m.mle.coef<-m.maxll<-NA}else{
       ##Calculate Akaike's Information Criterion (AIC)
       aic.fit <- stats::AIC(m.mle, k=2)
       bic.fit <- stats::BIC(m.mle)
@@ -95,7 +95,7 @@ snm<-function(comm,meta.com=NULL,taxon=NULL,alpha=0.05,simplify=FALSE)
       -sum(log(R))
     }
     bino.mle <- try(stats4::mle(bino.LL, start=list(mu=0, sigma=0.1), nobs=length(p)))
-    if(class(bino.mle)=="try-error"){aic.bino<-bic.bino<-bino.maxll<-NA}else{
+    if(inherits(bino.mle,"try-error")){aic.bino<-bic.bino<-bino.maxll<-NA}else{
       aic.bino <- stats::AIC(bino.mle, k=2)
       bic.bino <- stats::BIC(bino.mle)
       bino.maxll=bino.mle@details$value
@@ -116,7 +116,7 @@ snm<-function(comm,meta.com=NULL,taxon=NULL,alpha=0.05,simplify=FALSE)
       -sum(log(R))
     }
     pois.mle <- try(stats4::mle(pois.LL, start=list(mu=0, sigma=0.1), nobs=length(p)))
-    if(class(pois.mle)=="try-error"){aic.pois<-bic.pois<-pois.maxll<-NA }else{
+    if(inherits(pois.mle,"try-error")){aic.pois<-bic.pois<-pois.maxll<-NA }else{
       aic.pois <- stats::AIC(pois.mle, k=2)
       bic.pois <- stats::BIC(pois.mle)
       pois.maxll<-pois.mle@details$value
@@ -184,14 +184,14 @@ snm.boot<-function(comm,rand=1000,meta.com=NULL,taxon=NULL,alpha=0.05,detail=TRU
                            comr=comm[idr,,drop=FALSE]
                            out=try(iCAMP::snm(comm=comr,meta.com = meta.com,taxon = taxon,alpha=alpha,simplify = TRUE))
                            iter.n=1
-                           while(class(out)=="try-error"&iter.n<100)
+                           while(inherits(out,"try-error") & iter.n<100)
                            {
                              idr=sample(1:nrow(comm),nrow(comm),replace = TRUE)
                              comr=comm[idr,,drop=FALSE]
                              out=try(iCAMP::snm(comm=comr,meta.com = meta.com,taxon = taxon,alpha=alpha,simplify = TRUE))
                              iter.n=iter.n+1
                            }
-                           if(class(out)=="try-error"){output=rep(NA,length(obs));warning("snm error, NAs generated")}else{
+                           if(inherits(out,"try-error")){output=rep(NA,length(obs));warning("snm error, NAs generated")}else{
                              output=unlist(c(out$type.uw,out$type.wt))
                            }
                            output

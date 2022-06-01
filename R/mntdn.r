@@ -7,7 +7,7 @@ mntdn<-function(comm, pd, abundance.weighted = TRUE,
     if(utils::memory.limit()<memory.G*1024)
     {
       memotry=try(utils::memory.limit(size=memory.G*1024),silent = TRUE)
-      if(class(memotry)=="try-error"){warning(memotry[1])}
+      if(inherits(memotry,"try-error")){warning(memotry[1])}
     }
   }
   if(check.name)

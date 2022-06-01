@@ -1,7 +1,7 @@
 taxa.binphy.big<-function(tree,pd.desc, pd.spname, pd.wd, 
                           outgroup.tip=NA,outgroup.rm=TRUE,
                           d.cut=NULL,ds=0.2,bin.size.limit=24,
-                          nworker=4)
+                          nworker=4,d.cut.method=c("maxpd","maxdroot"))
 {
   requireNamespace("ape")
   requireNamespace("bigmemory")
@@ -19,10 +19,16 @@ taxa.binphy.big<-function(tree,pd.desc, pd.spname, pd.wd,
   
   if(is.null(d.cut))
   {
-    if(is.null(ds)){stop("d.cut or ds, at least one should be given.")}else{
+    if(is.null(ds))
+    {
+      stop("d.cut or ds, at least one should be given.")
+    }else if(d.cut.method[1]=="maxpd"){
       pdmax=iCAMP::maxbigm(m.desc = pd.desc, m.wd = pd.wd, nworker = nworker,
                     rm.na = TRUE, size.limit = 10000 * 10000)$max.value
       d.cut=(pdmax-ds)/2
+    }else if(d.cut.method[1]=="maxdroot"){
+      maxdroot=max(sapply(1:length(path),function(i){max(path[[i]][[3]])}))
+      d.cut=maxdroot-(ds/2)
     }
   }
   
@@ -44,8 +50,8 @@ taxa.binphy.big<-function(tree,pd.desc, pd.spname, pd.wd,
   colnames(sp.core)=c("bin.strict.id","bin.strict.taxa.num","bin.pd.max","bin.pd.mean","bin.pd.sd")
   
   sp.bin[,1]=node
-  sp.core[,1]=rownames(node.table)
-  sp.core[,2]=node.table
+  sp.core[,1]=as.integer(rownames(node.table)) #revised 20210626
+  sp.core[,2]=node.table[,1] #revised 20210626
   
   bin.sp.id=lapply(1:nrow(sp.core), function(i){rownames(sp.bin)[which(sp.bin[,1]==sp.core[i,1])]})
   names(bin.sp.id)=sp.core[,1]
@@ -111,7 +117,7 @@ taxa.binphy.big<-function(tree,pd.desc, pd.spname, pd.wd,
     droot=droot$droot
     droot=droot[order(droot[,2],decreasing = TRUE),]
     drank.id=match(c(bin.good.node,bin.small.node),droot[,1])
-    if(sum(!is.na(drank.id))==0){drank=droot[,1]}else{drank=droot[min(drank.id,na.rm = TRUE):nrow(droot),1]}
+    if(sum(!is.na(drank.id))==0){drank=as.integer(droot[,1])}else{drank=as.integer(droot[min(drank.id,na.rm = TRUE):nrow(droot),1])} #revised 20210626
     
     
     for(i in 1:length(drank))
@@ -132,7 +138,7 @@ taxa.binphy.big<-function(tree,pd.desc, pd.spname, pd.wd,
           id.s.com=bin.small.node[id.s]
           if(id.min>length(cl.g))
           {
-            sp.bin.temp[sp.bin.temp %in% id.s.com]=drank[i]
+            sp.bin.temp[which(as.integer(sp.bin.temp) %in% as.integer(id.s.com))]=drank[i] #revised 20210626
             if(sum(sp.bin.temp==drank[i])<bin.size.limit)
             {
               if(length(id.g)==0)

@@ -36,7 +36,10 @@ tree.path<-function(tree,nworker=4,range=NA,cum=c("no","from.root","from.tip","b
   }
   
   requireNamespace("parallel")
-  c1<-parallel::makeCluster(nworker,type="PSOCK")
+  c1<-try(parallel::makeCluster(nworker,type="PSOCK"))
+  if(inherits(c1,"try-error")){c1 <- try(parallel::makeCluster(nworker, setup_timeout = 0.5))}
+  if(inherits(c1,"try-error")){c1 <- parallel::makeCluster(nworker, setup_strategy = "sequential")}
+  
   message("Now computing path. begin at ", date(),". Please wait...")
   path<-parallel::parLapply(c1,range,pathf,edge=edge,edge.len=edge.len)
   parallel::stopCluster(c1)

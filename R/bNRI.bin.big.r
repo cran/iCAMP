@@ -2,7 +2,8 @@ bNRI.bin.big<-function(comm, pd.desc, pd.spname, pd.wd, pdid.bin, sp.bin,
                        spname.check=FALSE,nworker=4, memo.size.GB=50, weighted=c(TRUE,FALSE),
                        rand=1000,output.bMPD=FALSE,sig.index=c("SES","Confidence","RC","bNRI"),
                        unit.sum=NULL,correct.special=FALSE,detail.null=FALSE,
-                       special.method=c("MPD","MNTD","both"),ses.cut=1.96,rc.cut=0.95, conf.cut=0.975)
+                       special.method=c("MPD","MNTD","both"),ses.cut=1.96,rc.cut=0.95,conf.cut=0.975,
+                       dirichlet = FALSE)
 {
   #v20200727 add conf.cut, detail.null. change RC to sig.index.
   #load package
@@ -12,7 +13,7 @@ bNRI.bin.big<-function(comm, pd.desc, pd.spname, pd.wd, pdid.bin, sp.bin,
     if(utils::memory.limit()<memo.size.GB*1024)
     {
       memotry=try(utils::memory.limit(size=memo.size.GB*1024),silent = TRUE)
-      if(class(memotry)=="try-error"){warning(memotry[1])}
+      if(inherits(memotry,"try-error")){warning(memotry[1])}
     }
   }
   weighted=weighted[1];output.bMPD=output.bMPD[1]
@@ -57,7 +58,7 @@ bNRI.bin.big<-function(comm, pd.desc, pd.spname, pd.wd, pdid.bin, sp.bin,
     comr.bin=lapply(1:bin.num, function(j){com.rand[,match(rownames(sp.bin)[which(sp.bin==j)],colnames(com.rand))]})
     gc()
     requireNamespace("bigmemory")
-    pd=bigmemory::attach.big.matrix(dget(paste(pd.wd,"/",pd.desc)))
+    pd=bigmemory::attach.big.matrix(dget(paste0(pd.wd,"/",pd.desc)))
     bMPD.rand<-lapply(1:bin.num,
                       function(u)
                       {
@@ -82,7 +83,9 @@ bNRI.bin.big<-function(comm, pd.desc, pd.spname, pd.wd, pdid.bin, sp.bin,
                    }) # calculate observed betaMPD.
   bMPD.obs<-array(unlist(bMPD.obs), dim = c(nrow(bMPD.obs[[1]]),ncol(bMPD.obs[[2]]),bin.num))
   gc()
-  c1<-parallel::makeCluster(nworker,type="PSOCK")
+  c1<-try(parallel::makeCluster(nworker,type="PSOCK"))
+  if(inherits(c1,"try-error")){c1 <- try(parallel::makeCluster(nworker, setup_timeout = 0.5))}
+  if(inherits(c1,"try-error")){c1 <- parallel::makeCluster(nworker, setup_strategy = "sequential")}
   message("Now randomizing by parallel computing. Begin at ", date(),". Please wait...")
   bMPD.rand<-parallel::parLapply(c1,1:rand,bMPD.random,pd.desc=pd.desc, pd.spname=pd.spname, pd.wd=pd.wd, pdid.bin=pdid.bin,com=comm,sp.bin=sp.bin,bin.num=bin.num,weighted=weighted,perm=perm,unit.sum=unit.sum)
   parallel::stopCluster(c1)
@@ -190,7 +193,7 @@ bNRI.bin.big<-function(comm, pd.desc, pd.spname, pd.wd, pdid.bin, sp.bin,
         {
           rcm=(iCAMP::RC.pc(comm=commi,rand=rand,na.zero=TRUE,nworker=nworker,
                             memory.G=memo.size.GB,weighted=weighted,
-                            unit.sum=unit.sum,silent=TRUE))$index
+                            unit.sum=unit.sum,silent=TRUE,dirichlet = dirichlet))$index
           
           if(length(samp1.id)>0)
           {
@@ -280,11 +283,11 @@ bNRI.bin.big<-function(comm, pd.desc, pd.spname, pd.wd, pdid.bin, sp.bin,
     bMPD.randm=lapply(1:(dim(bMPD.rand)[3]),
                       function(i)
                       {
-                        outi=sapply(1:(dim(bMPD.rand)[4]),
+                        outi=matrix(sapply(1:(dim(bMPD.rand)[4]),
                                     function(j)
                                     {
                                       (iCAMP::dist.3col(bMPD.rand[,,i,j]))[,3]
-                                    })
+                                    }),ncol=(dim(bMPD.rand)[4]))
                         colnames(outi)=paste0("rand",1:ncol(outi))
                         data.frame(samp2.name,outi,stringsAsFactors = FALSE)
                       })

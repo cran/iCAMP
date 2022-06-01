@@ -10,7 +10,7 @@ Phylogenetic binning for iCAMP analysis. To handle large phylogenetic tree, phyl
 taxa.binphy.big(tree, pd.desc, pd.spname, pd.wd,
                 outgroup.tip = NA, outgroup.rm = TRUE,
                 d.cut=NULL, ds=0.2, bin.size.limit = 24,
-                nworker = 4)
+                nworker = 4, d.cut.method=c("maxpd","maxdroot"))
 }
 \arguments{
   \item{tree}{phylogenetic tree, an object of class "phylo".}
@@ -23,6 +23,7 @@ taxa.binphy.big(tree, pd.desc, pd.spname, pd.wd,
   \item{ds}{numeric, the general threshold of phylogenetic distance within which the phylogenetic signal is significant. default is 0.2.}
   \item{bin.size.limit}{integer, the minimal requirement of bin size (taxa numer in a bin). Default setting is 24.}
   \item{nworker}{integer, for parallel computing. Either a character vector of host names on which to run the worker copies of R, or a positive integer (in which case that number of copies is run on localhost). default is 4, means 4 threads will be run.}
+  \item{d.cut.method}{character, to specify the method to calculate d.cut from ds. 'maxpd' means based on maximum phylogenetic distance, d.cut = (maxpd - ds)/2. 'maxdroot' means based on maximum distance to root, d.cut = maxdroot - (ds/2), which is preferred if the tree only has one edge from the root.}
 }
 \details{
 The phylogenetic tree is truncated at a certain phylogenetic distance (as short as necessary) to the root (d.cut), by which all the rest connections between tips (taxa) are lower than a threshold. Within the threshold, phylogenetic signal is generally significant. The taxa derived from the same ancestor after the truncating point are grouped to the same strict bin. Then, each small bin is merged into the bin with the nearest relatives. This procedure is repeated until all merged bins have enough taxa (>= bin.size.limit). Bigmemory (Kane et al 2013) is used to deal with large datasets.
@@ -44,6 +45,8 @@ Kane, M.J., Emerson, J., & Weston, S. (2013). Scalable Strategies for Computing 
 Daliang Ning
 }
 \note{
+Version 4: 2021.6.26, fix a bug which may mess up some large taxa ids.
+Version 4: 2021.6.4, add option d.cut.method to handle trees with only one edge from root.
 Version 3: 2020.9.1, remove setwd. change dontrun to donttest and revise save.wd in help doc.
 Version 2: 2020.8.19, update help document, add example.
 Version 1: 2015.12.16
@@ -61,7 +64,10 @@ tree=example.data$tree
 # but you may test the code on your computer
 # after change the folder path for 'save.wd'.
 \donttest{
-  save.wd=tempdir() # please change to the folder you want to save the big niche difference matrix.
+  wd0=getwd()
+  save.wd=paste0(tempdir(),"/pdbig.taxa.binphy")
+  # please change to the folder you want to save the big niche difference matrix.
+  
   nworker=2 # parallel computing thread number
   pd.big=pdist.big(tree = tree, wd=save.wd, nworker = nworker)
   
@@ -75,6 +81,7 @@ tree=example.data$tree
                            pd.spname = pd.big$tip.label, pd.wd = pd.big$pd.wd,
                            ds = ds, bin.size.limit = bin.size.limit,
                            nworker = nworker)
+  setwd(wd0)
 }
 }
 \keyword{main}

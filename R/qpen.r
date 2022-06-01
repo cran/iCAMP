@@ -1,17 +1,23 @@
 qpen<-function(comm=NULL,pd=NULL,pd.big.wd=NULL,pd.big.spname=NULL,tree=NULL,bNTI=NULL,RC=NULL,
                ab.weight=TRUE,meta.ab=NULL,exclude.conspecifics=FALSE,rand.time=1000,
                sig.bNTI=1.96,sig.rc=0.95,nworker=4,memory.G=50,project=NA,wd=getwd(),
-               output.detail=FALSE,save.bNTIRC=FALSE)
+               output.detail=FALSE,save.bNTIRC=FALSE,
+               taxo.metric="bray", transform.method=NULL, logbase=2,
+               dirichlet=FALSE)
 {
   # quantify processes according to Stegen et al 2015
-  
+  if(max(rowSums(comm,na.rm = TRUE))<=1 & (!dirichlet))
+  {
+    warning("The values in comm are less than 1, thus considered as proportional data, Dirichlet distribution is used to assign abundance in null model.")
+    dirichlet=TRUE
+  }
   if(is.na(project)){project=format(Sys.time(),format = "%Y%m%d%H%M")}
   if(.Platform$OS.type=="windows")
   {
     if(utils::memory.limit()<memory.G*1024)
     {
       memotry=try(utils::memory.limit(size=memory.G*1024),silent = TRUE)
-      if(class(memotry)=="try-error"){warning(memotry[1])}
+      if(inherits(memotry,"try-error")){warning(memotry[1])}
     }
   }
   
@@ -88,7 +94,9 @@ qpen<-function(comm=NULL,pd=NULL,pd.big.wd=NULL,pd.big.spname=NULL,tree=NULL,bNT
     rc.m<-RC.pc(comm=comm,rand=rand.time,na.zero=TRUE,nworker=nworker,
                 memory.G=memory.G,weighted=ab.weight,unit.sum=NULL,
                 meta.ab=meta.ab,sig.index="RC",
-                detail.null=TRUE,output.bray=TRUE)
+                detail.null=TRUE,output.bray=TRUE,
+                taxo.metric=taxo.metric, transform.method=transform.method,
+                logbase=logbase, dirichlet=dirichlet)
     BC=rc.m$BC.obs
     RC=rc.m$index
     BC.rand=rc.m$rand

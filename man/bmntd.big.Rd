@@ -53,12 +53,15 @@ tree=example.data$tree
 # but you may test the code on your computer
 # after change the folder path for 'save.wd'.
 \donttest{
-  save.wd=tempdir() # please change to the folder you want to use.
-  nworker=2 # parallel computing thread number
-  pd.big=iCAMP::pdist.big(tree = tree,wd = save.wd, nworker = nworker)
-  bmntd.wt=bmntd.big(comm=comm, pd.desc = pd.big$pd.file,
-                     pd.spname = pd.big$tip.label, pd.wd = pd.big$pd.wd,
-                     abundance.weighted = TRUE)
+wd0=getwd()
+save.wd=paste0(tempdir(),"/pdbig.bmntd.big")
+# you may change save.wd to the folder you want to save the pd.big output.
+nworker=2 # parallel computing thread number
+pd.big=pdist.big(tree = tree, wd=save.wd, nworker = nworker)
+bmntd.wt=bmntd.big(comm=comm, pd.desc = pd.big$pd.file,
+                   pd.spname = pd.big$tip.label, pd.wd = pd.big$pd.wd,
+                   abundance.weighted = TRUE)
+setwd(wd0)
 }
 }
 \keyword{phylogenetic}

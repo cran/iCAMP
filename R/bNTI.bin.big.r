@@ -5,7 +5,7 @@ bNTI.bin.big<-function(comm, pd.desc, pd.spname, pd.wd, pdid.bin, sp.bin,
                        correct.special=FALSE,detail.null=FALSE,
                        special.method=c("MNTD","MPD","both"),
                        ses.cut=1.96, rc.cut=0.95, conf.cut=0.975,
-                       exclude.conspecifics = FALSE)
+                       exclude.conspecifics = FALSE, dirichlet = FALSE)
 {
   #v20200728 add conf.cut, detail.null. change RC to sig.index.
   #load package
@@ -15,7 +15,7 @@ bNTI.bin.big<-function(comm, pd.desc, pd.spname, pd.wd, pdid.bin, sp.bin,
     if(utils::memory.limit()<memo.size.GB*1024)
     {
       memotry=try(utils::memory.limit(size=memo.size.GB*1024),silent = TRUE)
-      if(class(memotry)=="try-error"){warning(memotry[1])}
+      if(inherits(memotry,"try-error")){warning(memotry[1])}
     }
   }
   weighted=weighted[1];output.bMNTD=output.bMNTD[1]
@@ -91,7 +91,9 @@ bNTI.bin.big<-function(comm, pd.desc, pd.spname, pd.wd, pdid.bin, sp.bin,
                     }) # calculate observed betaMNTD.
   bMNTD.obs<-array(unlist(bMNTD.obs), dim = c(nrow(bMNTD.obs[[1]]),ncol(bMNTD.obs[[1]]),bin.num))
   gc()
-  c1<-parallel::makeCluster(nworker,type="PSOCK")
+  c1<-try(parallel::makeCluster(nworker,type="PSOCK"))
+  if(inherits(c1,"try-error")){c1 <- try(parallel::makeCluster(nworker, setup_timeout = 0.5))}
+  if(inherits(c1,"try-error")){c1 <- parallel::makeCluster(nworker, setup_strategy = "sequential")}
   message("Now randomizing by parallel computing. Begin at ", date(),". Please wait...")
   bMNTD.rand<-parallel::parLapply(c1,1:rand,bMNTD.random,pd.desc=pd.desc, pd.spname=pd.spname,
                         pd.wd=pd.wd, pdid.bin=pdid.bin, com=comm,sp.bin=sp.bin,
@@ -203,7 +205,7 @@ bNTI.bin.big<-function(comm, pd.desc, pd.spname, pd.wd, pdid.bin, sp.bin,
         {
           rcm=(iCAMP::RC.pc(comm=commi,rand=rand,na.zero=TRUE,nworker=nworker,
                             memory.G=memo.size.GB,weighted=weighted,
-                            unit.sum=unit.sum,silent=TRUE))$index
+                            unit.sum=unit.sum,silent=TRUE,dirichlet = dirichlet))$index
           
           if(length(samp1.id)>0)
           {
@@ -293,11 +295,11 @@ bNTI.bin.big<-function(comm, pd.desc, pd.spname, pd.wd, pdid.bin, sp.bin,
     bMNTD.randm=lapply(1:(dim(bMNTD.rand)[3]),
                       function(i)
                       {
-                        outi=sapply(1:(dim(bMNTD.rand)[4]),
+                        outi=matrix(sapply(1:(dim(bMNTD.rand)[4]),
                                     function(j)
                                     {
                                       (iCAMP::dist.3col(bMNTD.rand[,,i,j]))[,3]
-                                    })
+                                    }),ncol=(dim(bMNTD.rand)[4]))
                         colnames(outi)=paste0("rand",1:ncol(outi))
                         data.frame(samp2.name,outi,stringsAsFactors = FALSE)
                       })

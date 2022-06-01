@@ -52,13 +52,17 @@ tree=example.data$tree
 # but you may test the code on your computer
 # after change the folder path for 'save.wd'.
 \donttest{
-  save.wd=tempdir() # please change to the folder you want to save the pd.big output.
+  wd0=getwd()
+  save.wd=paste0(tempdir(),"/pdbig.midpointroot")
+  # please change to the folder you want to save the pd.big output.
+  
   nworker=2 # parallel computing thread number
   pd.big=pdist.big(tree = tree, wd=save.wd, nworker = nworker)
   
   mroot=midpoint.root.big(tree = tree, pd.desc = pd.big$pd.file,
                           pd.spname = pd.big$tip.label,
                           pd.wd = pd.big$pd.wd, nworker = nworker)
+  setwd(wd0)
 }
 }
 

@@ -3,7 +3,8 @@ bNRIn.p<-function(comm, dis, nworker=4, memo.size.GB=50,
                   sig.index=c("SES","Confidence","RC","bNRI"),unit.sum=NULL,
                   correct.special=FALSE,detail.null=FALSE,
                   special.method=c("MPD","MNTD","both"),
-                  ses.cut=1.96,rc.cut=0.95,conf.cut=0.975)
+                  ses.cut=1.96,rc.cut=0.95,conf.cut=0.975,
+                  dirichlet = FALSE)
 {
   #v20200727 add conf.cut, detail.null. change RC to sig.index.
   #load package
@@ -14,7 +15,7 @@ bNRIn.p<-function(comm, dis, nworker=4, memo.size.GB=50,
     if(utils::memory.limit()<memo.size.GB*1024)
     {
       memotry=try(utils::memory.limit(size=memo.size.GB*1024),silent = TRUE)
-      if(class(memotry)=="try-error"){warning(memotry[1])}
+      if(inherits(memotry,"try-error")){warning(memotry[1])}
     }
   }
   
@@ -64,7 +65,10 @@ bNRIn.p<-function(comm, dis, nworker=4, memo.size.GB=50,
   bMPD.obs<-as.matrix(iCAMP::bmpd(comm, dis, abundance.weighted = weighted, unit.sum=unit.sum)) # calculate observed betaMPD.
   spname=colnames(comm)
   gc()
-  c1<-parallel::makeCluster(nworker,type="PSOCK")
+  
+  c1<-try(parallel::makeCluster(nworker,type="PSOCK"))
+  if(inherits(c1,"try-error")){c1 <- try(parallel::makeCluster(nworker, setup_timeout = 0.5))}
+  if(inherits(c1,"try-error")){c1 <- parallel::makeCluster(nworker, setup_strategy = "sequential")}
   message("Now randomizing by parallel computing. Begin at ", date(),". Please wait...")
   bMPD.rand<-parallel::parLapply(c1,1:rand,bMPD.random,diss=dis,com=comm,weighted=weighted,perm=perm,unit.sum=unit.sum)
   parallel::stopCluster(c1)
@@ -161,7 +165,7 @@ bNRIn.p<-function(comm, dis, nworker=4, memo.size.GB=50,
       {
         rcm=(iCAMP::RC.pc(comm=comm,rand=rand,na.zero=TRUE,nworker=nworker,
                           memory.G=memo.size.GB,weighted=weighted,
-                          unit.sum=unit.sum,silent=TRUE))$index
+                          unit.sum=unit.sum,silent=TRUE,dirichlet = dirichlet))$index
         
         if(length(samp1.id)>0)
         {
@@ -221,11 +225,11 @@ bNRIn.p<-function(comm, dis, nworker=4, memo.size.GB=50,
   {
     rownames(bMPD.rand)=rownames(bMPD.obs)
     colnames(bMPD.rand)=colnames(bMPD.obs)
-    bMPD.randm=sapply(1:(dim(bMPD.rand)[3]),
+    bMPD.randm=matrix(sapply(1:(dim(bMPD.rand)[3]),
                        function(i)
                        {
                          (iCAMP::dist.3col(bMPD.rand[,,i]))[,3]
-                       })
+                       }),ncol=(dim(bMPD.rand)[3]))
     colnames(bMPD.randm)=paste0("rand",1:ncol(bMPD.randm))
     if(correct.special)
     {

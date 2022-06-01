@@ -16,7 +16,7 @@ bmntd.big<-function(comm, pd.desc="pd.desc", pd.spname, pd.wd,
   N=nrow(comm)
   time1=Sys.time()
   pd=try(bigmemory::attach.big.matrix(dget(paste0(pd.wd,"/",pd.desc))))
-  if(class(pd)=="try-error"){pd=bigmemory::attach.big.matrix(paste0(pd.wd,"/",pd.desc))}
+  if(inherits(pd,"try-error")){pd=bigmemory::attach.big.matrix(paste0(pd.wd,"/",pd.desc))}
   sp.num=ncol(comm)
   min.d=rep(0,sp.num)
   if(exclude.conspecifics)

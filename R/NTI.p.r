@@ -8,7 +8,7 @@ NTI.p<-function(comm, dis, nworker=4, memo.size.GB=50,
     if(utils::memory.limit()<memo.size.GB*1024)
     {
       memotry=try(utils::memory.limit(size=memo.size.GB*1024),silent = TRUE)
-      if(class(memotry)=="try-error"){warning(memotry[1])}
+      if(inherits(memotry,"try-error")){warning(memotry[1])}
     }
   }
   weighted=weighted[1]
@@ -54,7 +54,9 @@ NTI.p<-function(comm, dis, nworker=4, memo.size.GB=50,
   gc()
   
   requireNamespace("parallel")
-  c1<-parallel::makeCluster(nworker,type="PSOCK")
+  c1<-try(parallel::makeCluster(nworker,type="PSOCK"))
+  if(inherits(c1,"try-error")){c1 <- try(parallel::makeCluster(nworker, setup_timeout = 0.5))}
+  if(inherits(c1,"try-error")){c1 <- parallel::makeCluster(nworker, setup_strategy = "sequential")}
   if(!silent){message("Now randomizing by parallel computing. Begin at ", date(),". Please wait...")}
   MNTD.rand<-parallel::parLapply(c1,permat,MNTD.random,diss=dis,com=comm,weighted=weighted)
   parallel::stopCluster(c1)

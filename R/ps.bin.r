@@ -35,7 +35,7 @@ ps.bin<-function(sp.bin,sp.ra,spname.use=NULL,
                  binabi=sum(sp.ra[which(names(sp.ra) %in% spiu)])
                  if(length(spiu)<min.spn)
                  {
-                   out=rep(NA,(length(env.names)*2*length(cor.method))+1)
+                   out=c(rep(NA,(length(env.names)*2*length(cor.method))),abu=NA)
                  }else{
                    pdi=pdm[match(spiu,pd.spname),match(spiu,pd.spname)]
                    rpi=sapply(1:length(env.names),

@@ -15,7 +15,7 @@ bNTI.bin.big(comm, pd.desc, pd.spname, pd.wd, pdid.bin,
              unit.sum = NULL, correct.special = FALSE, detail.null = FALSE,
              special.method = c("MNTD","MPD","both"),
              ses.cut = 1.96, rc.cut = 0.95, conf.cut = 0.975,
-             exclude.conspecifics = FALSE)
+             exclude.conspecifics = FALSE, dirichlet = FALSE)
 }
 \arguments{
   \item{comm}{matrix or data.frame, community data, each row is a sample or site, each colname is a species or OTU or gene, thus rownames should be sample IDs, colnames should be taxa IDs.}
@@ -39,6 +39,7 @@ bNTI.bin.big(comm, pd.desc, pd.spname, pd.wd, pdid.bin,
   \item{rc.cut}{numeric, the cutoff of significant modified Raup-Crick metric, default is 0.95.}
   \item{conf.cut}{numeric, the cutoff of significant one-side confidence level, default is 0.975.}
   \item{exclude.conspecifics}{Logic, should conspecific taxa in different communities be exclude from MNTD calculations? default is FALSE. The same as in the function bmntd.}
+  \item{dirichlet}{Logic. If TRUE, the taxonomic null model for correcting special cases will use Dirichlet distribution to generate relative abundances in randomized community matrix. default is FALSE.}
 }
 \details{
 The beta nearest taxon index (betaNTI; Webb et al. 2008, Stegen et al. 2012) is calculated for each phylogenetic bin. betaNTI is a standardized measure of the mean phylogenetic distance to the nearest taxon between samples/communities (beta MNTD) and quantifies the extent of terminal clustering, independent of deep level clustering. Parallel computing is used to improve the speed.
@@ -75,6 +76,7 @@ Kane, M.J., Emerson, J., Weston, S. (2013). Scalable Strategies for Computing wi
 Daliang Ning
 }
 \note{
+Version 8: 2021.4.18, fix the bug when detail.null=TRUE and comm has only two samples.
 Version 7: 2020.9.1, remove setwd. change dontrun to donttest and revise save.wd in help doc.
 Version 6: 2020.8.18, update help document, add example.
 Version 5: 2020.8.1, change RC opiton to sig.index, add detail.null, rc.cut and conf.cut. 
@@ -102,7 +104,9 @@ sp.bin=example.data$sp.bin
 # the following code is set as 'not test'.
 # but you may test the code on your computer after change the path for 'save.wd'.
 \donttest{
-save.wd=tempdir() # please change to the folder you want to save the pd.big output.
+wd0=getwd()
+save.wd=paste0(tempdir(),"/pdbig.bNTI.bin.big")
+# you may change save.wd to the folder you want to save the pd.big output.
 nworker=2 # parallel computing thread number
 pd.big=pdist.big(tree = tree, wd=save.wd, nworker = nworker)
 rand.time=20 # usually use 1000 for real data.
@@ -114,6 +118,7 @@ bNTIbins=bNTI.bin.big(comm=comm, pd.desc=pd.big$pd.file, pd.spname=pd.big$tip.la
                       sig.index="SES", unit.sum = NULL, correct.special = TRUE,
                       detail.null = FALSE, special.method = "MNTD",
                       exclude.conspecifics = FALSE)
+setwd(wd0)
 }
 }
 

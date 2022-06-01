@@ -2,14 +2,13 @@ dniche<-function(env,comm,method=c("ab.overlap","niche.value","prefer.overlap"),
                  nworker=4,memory.G=50,out.dist=FALSE,bigmemo=TRUE,nd.wd=getwd(),
                  nd.spname.file="nd.names.csv",detail.file="ND.res.rda")
 {
-  #source(paste(code.wd,"/match.name.r",sep = ""))
   checksamp=match.name(name.check = rownames(env),rn.list = list(env=env,comm=comm))
   env=checksamp$env
   comm=checksamp$comm
   envnum=ncol(env)
   spname=colnames(comm)
   if(is.null(colnames(env))){colnames(env)=paste0("env",1:ncol(env))}
-  if(is.null(nd.wd)){nd.wd=getwd()}
+  if(is.null(nd.wd)){nd.wd=getwd()}else{if(!dir.exists(nd.wd)){dir.create(nd.wd)}}
   
   res=list()
   res$bigmemo=bigmemo
@@ -88,7 +87,7 @@ dniche<-function(env,comm,method=c("ab.overlap","niche.value","prefer.overlap"),
       if(utils::memory.limit()<memory.G*1024)
       {
         memotry=try(utils::memory.limit(size=memory.G*1024),silent = TRUE)
-        if(class(memotry)=="try-error"){warning(memotry[1])}
+        if(inherits(memotry,"try-error")){warning(memotry[1])}
       }
     }
     
@@ -102,7 +101,9 @@ dniche<-function(env,comm,method=c("ab.overlap","niche.value","prefer.overlap"),
         message("Now computing density model. j=",j," in ",envnum,". begin at ", date(),". Please wait...")
         den<-lapply(2:ncol(comm),dens,envj=env[,j],comp=comp)
       }else{
-        c1<-parallel::makeCluster(nworker,type="PSOCK")
+        c1<-try(parallel::makeCluster(nworker,type="PSOCK"))
+        if(inherits(c1,"try-error")){c1 <- try(parallel::makeCluster(nworker, setup_timeout = 0.5))}
+        if(inherits(c1,"try-error")){c1 <- parallel::makeCluster(nworker, setup_strategy = "sequential")}
         message("Now parallel computing density model. j=",j," in ",envnum,". begin at ", date(),". Please wait...")
         den<-parallel::parLapply(c1,2:ncol(comm),dens,envj=env[,j],comp=comp)
         parallel::stopCluster(c1)
@@ -115,9 +116,11 @@ dniche<-function(env,comm,method=c("ab.overlap","niche.value","prefer.overlap"),
       if(nworker==1)
       {
         message("Now computing niche distance. j=",j," in ",envnum,". begin at ", date(),". Please wait...")
-        dis<-lapply(c0,1:(ncol(den)-1),dio,den=den,res=res,j=j)
+        dis<-lapply(1:(ncol(den)-1),dio,den=den,res=res,j=j)
       }else{
-        c0<-parallel::makeCluster(nworker,type="PSOCK")
+        c0<-try(parallel::makeCluster(nworker,type="PSOCK"))
+        if(inherits(c0,"try-error")){c0 <- try(parallel::makeCluster(nworker, setup_timeout = 0.5))}
+        if(inherits(c0,"try-error")){c0 <- parallel::makeCluster(nworker, setup_strategy = "sequential")}
         message("Now parallel computing niche distance. j=",j," in ",envnum,". begin at ", date(),". Please wait...")
         dis<-parallel::parLapply(c0,1:(ncol(den)-1),dio,den=den,res=res,j=j)
         parallel::stopCluster(c0)

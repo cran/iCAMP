@@ -49,6 +49,7 @@ Kane, M.J., Emerson, J., Weston, S. (2013). Scalable Strategies for Computing wi
 Daliang Ning
 }
 \note{
+Version 4: 2022.5.29, if nd.wd does not exist, creat a folder as nd.wd.
 Version 3: 2020.9.1, add nd.spname.file and detail.file; remove setwd; change dontrun to donttest and revise save.wd in help doc.
 Version 2: 2020.8.18, add example.
 Version 1: 2020.5.15
@@ -71,11 +72,15 @@ niche.dif=dniche(env = env, comm = comm, method = "niche.value",
 # it is set as 'not test'.
 # but you may test the code on your computer after change the path for 'save.wd'.
 \donttest{
-  save.wd=tempdir() # please change to the folder you want to save the big niche difference matrix.
+  wd0=getwd()
+  save.wd=paste0(tempdir(),"/dnichewd")
+  # please change to the folder you want to save the big niche difference matrix.
+  
   nworker=2 # parallel computing thread number
   niche.dif=dniche(env = env, comm = comm,
                    method = "niche.value", nworker = nworker,
                    out.dist=FALSE,bigmemo=TRUE,nd.wd = save.wd)
+  setwd(wd0)
 }
 }
 \keyword{phylogenetic signal}

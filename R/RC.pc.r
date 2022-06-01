@@ -1,18 +1,26 @@
 RC.pc<-function(comm,rand=1000,na.zero=TRUE,nworker=4,
                 memory.G=50,weighted=TRUE,unit.sum=NULL,
                 meta.ab=NULL,sig.index=c("RC","Confidence","SES"),
-                detail.null=FALSE,output.bray=FALSE,silent=FALSE)
+                detail.null=FALSE,output.bray=FALSE,silent=FALSE,
+                taxo.metric="bray", transform.method=NULL, logbase=2,
+                dirichlet=FALSE)
 {
   # v20200728 add sig.index, detail.null, output.bray
+  
   requireNamespace("vegan")
   requireNamespace("parallel")
+  if(max(rowSums(comm,na.rm = TRUE))<=1 & (!dirichlet))
+  {
+    warning("The values in comm are less than 1, thus considered as proportional data, Dirichlet distribution is used to assign abundance in null model.")
+    dirichlet=TRUE
+  }
   
   if(.Platform$OS.type=="windows")
   {
     if(utils::memory.limit()<memory.G*1024)
     {
       memotry=try(utils::memory.limit(size=memory.G*1024),silent = TRUE)
-      if(class(memotry)=="try-error"){warning(memotry[1])}
+      if(inherits(memotry,"try-error")){warning(memotry[1])}
     }
   }
   com<-comm[,colSums(comm)>0]
@@ -21,23 +29,39 @@ RC.pc<-function(comm,rand=1000,na.zero=TRUE,nworker=4,
   if(!(sig.index %in% c("RC","Confidence","SES"))){stop("wrong sig.index for RC.pc.")}
   if(!is.null(unit.sum)){if(length(unit.sum)==1){unit.sum=rep(unit.sum,nrow(comm))}}
   
-  BCnew<-function(comi,unit.sum,na.zero)
+  BCnew<-function(comi,unit.sum,na.zero,
+                  taxo.metric,transform.method,logbase)
   {
-    if(is.null(unit.sum))
+    if(taxo.metric=='bray' & is.null(transform.method))
     {
-      comit=comi/rowSums(comi)
-      comit[which(rowSums(comi)==0),]=0
-      BC=vegan::vegdist(comit,method="bray")
+      if(is.null(unit.sum))
+      {
+        comit=comi/rowSums(comi)
+        comit[which(rowSums(comi)==0),]=0
+        BC=vegan::vegdist(comit,method="bray")
+      }else{
+        comit=comi/unit.sum
+        comit[which(unit.sum==0),]=0
+        BC=vegan::vegdist(comit,method="manhattan")/2
+      }
     }else{
-      comit=comi/unit.sum
-      comit[which(unit.sum==0),]=0
-      BC=vegan::vegdist(comit,method="manhattan")/2
+      if(!is.null(transform.method))
+      {
+        if(inherits(transform.method,"function"))
+        {
+          comit=transform.method(comi)
+        }else{
+          comit=vegan::decostand(comi,method = transform.method,logbase = logbase,na.rm=TRUE)
+        }
+      }else{comit=comi}
+      BC=vegan::vegdist(comit,method = taxo.metric)
     }
     if(na.zero){BC[is.na(BC)]=0}
     as.matrix(BC)
   }
   
-  BC.obs<-BCnew(com,unit.sum,na.zero)
+  BC.obs<-BCnew(com,unit.sum,na.zero,
+                taxo.metric,transform.method,logbase)
   
   if(is.null(meta.ab))
   {
@@ -70,43 +94,50 @@ RC.pc<-function(comm,rand=1000,na.zero=TRUE,nworker=4,
   Ni<-rowSums(com)
   samp.num=nrow(com)
   
-  BC.rand<-function(j,com.rd0,samp.num,id,prob.sp,prob.ab,Si,Ni,na.zero,unit.sum)
+  BC.rand<-function(j,com.rd0,samp.num,id,prob.sp,prob.ab,Si,Ni,na.zero,unit.sum,
+                    BCnew,taxo.metric,transform.method,logbase,dirichlet)
   {
     requireNamespace("vegan")
-    BCnew<-function(comi,unit.sum,na.zero)
-    {
-      if(is.null(unit.sum))
-      {
-        comit=comi/rowSums(comi)
-        comit[which(rowSums(comi)==0),]=0
-        BC=vegan::vegdist(comit,method="bray")
-      }else{
-        comit=comi/unit.sum
-        comit[which(unit.sum==0),]=0
-        BC=vegan::vegdist(comit,method="manhattan")/2
-      }
-      if(na.zero){BC[is.na(BC)]=0}
-      as.matrix(BC)
-    }
+    
     com.rd=com.rd0
-    for(i in 1:samp.num)
+    if(!dirichlet)
     {
-      if(Si[i]==0){com.rd[i,]=0}else{
-        id.sp<-sample(id,Si[i],replace=FALSE,prob=prob.sp)
-        if(length(id.sp)==1){count=rep(id.sp,Ni[i])}else{
-          count<-sample(id.sp,(Ni[i]-Si[i]),replace=TRUE,prob=prob.ab[id.sp])
+      for(i in 1:samp.num)
+      {
+        if(Si[i]==0){com.rd[i,]=0}else{
+          id.sp<-sample(id,Si[i],replace=FALSE,prob=prob.sp)
+          if(length(id.sp)==1){count=rep(id.sp,Ni[i])}else{
+            count<-sample(id.sp,(Ni[i]-Si[i]),replace=TRUE,prob=prob.ab[id.sp])
+          }
+          table<-table(count)
+          com.rd[i,as.numeric(names(table))]=as.vector(table)
+          com.rd[i,id.sp]=com.rd[i,id.sp]+1
         }
-        table<-table(count)
-        com.rd[i,as.numeric(names(table))]=as.vector(table)
-        com.rd[i,id.sp]=com.rd[i,id.sp]+1
+      }
+    }else{
+      for(i in 1:samp.num)
+      {
+        if(Si[i]==0){com.rd[i,]=0}else{
+          id.sp<-sample(id,Si[i],replace=FALSE,prob=prob.sp)
+          if(length(id.sp)==1){com.rd[i,id.sp]=1}else{
+            requireNamespace("DirichletReg")
+            com.rd[i,id.sp]=DirichletReg::rdirichlet(n=1,alpha = prob.ab[id.sp])
+          }
+        }
       }
     }
-    BCnew(com.rd,unit.sum,na.zero)
+    BCnew(com.rd,unit.sum,na.zero,
+          taxo.metric,transform.method,logbase)
   }
   
-  c1<-parallel::makeCluster(nworker,type="PSOCK")
+  c1<-try(parallel::makeCluster(nworker,type="PSOCK"))
+  if(inherits(c1,"try-error")){c1 <- try(parallel::makeCluster(nworker, setup_timeout = 0.5))}
+  if(inherits(c1,"try-error")){c1 <- parallel::makeCluster(nworker, setup_strategy = "sequential")}
   if(!silent){message("Now parallel computing. begin at ", date(),". Please wait...")}
-  BC.rd<-parallel::parLapply(c1,1:rand,BC.rand,com.rd0=com.rd0,samp.num=samp.num,id=id,prob.sp=prob.sp,prob.ab=prob.ab,Si=Si,Ni=Ni,na.zero=na.zero,unit.sum=unit.sum)
+  BC.rd<-parallel::parLapply(c1,1:rand,BC.rand,com.rd0=com.rd0,samp.num=samp.num,id=id,
+                             prob.sp=prob.sp,prob.ab=prob.ab,Si=Si,Ni=Ni,na.zero=na.zero,unit.sum=unit.sum,
+                             BCnew=BCnew,taxo.metric=taxo.metric,
+                             transform.method=transform.method,logbase=logbase,dirichlet=dirichlet)
   parallel::stopCluster(c1)
   
   BC.rd=array(unlist(BC.rd),dim=c(nrow(BC.rd[[1]]),ncol(BC.rd[[1]]),length(BC.rd)))
@@ -142,11 +173,11 @@ RC.pc<-function(comm,rand=1000,na.zero=TRUE,nworker=4,
   {
     rownames(BC.rd)=rownames(BC.obs)
     colnames(BC.rd)=colnames(BC.obs)
-    BC.randm=sapply(1:(dim(BC.rd)[3]),
+    BC.randm=matrix(sapply(1:(dim(BC.rd)[3]),
                        function(i)
                        {
                          (iCAMP::dist.3col(BC.rd[,,i]))[,3]
-                       })
+                       }),ncol=(dim(BC.rd)[3]))
     colnames(BC.randm)=paste0("rand",1:ncol(BC.randm))
     output=c(output,list(rand=data.frame((iCAMP::dist.3col(BC.rd[,,1]))[,1:2,drop=FALSE],
                                          BC.randm,stringsAsFactors = FALSE)))

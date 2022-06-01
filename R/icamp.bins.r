@@ -71,17 +71,17 @@ icamp.bins<-function(icamp.detail,treat=NULL,clas=NULL,silent=FALSE,
       mj.name=names(icamp.detail)[mj]
       if(sig.index %in% c("SES.RC","RC"))
       {
-        tax.name=paste0("RCbray",substring(mj.name,nchar(mj.name)))
+        tax.name=paste0("RC",icamp.detail$setting$taxo.metric,substring(mj.name,nchar(mj.name)))
       }else if(sig.index=="SES"){
-        tax.name=paste0("SESbray",substring(mj.name,nchar(mj.name)))
+        tax.name=paste0("SES",icamp.detail$setting$taxo.metric,substring(mj.name,nchar(mj.name)))
       }else if(sig.index=="Confidence"){
-        tax.name=paste0("Cbray",substring(mj.name,nchar(mj.name)))
+        tax.name=paste0("C",icamp.detail$setting$taxo.metric,substring(mj.name,nchar(mj.name)))
       }
       mij.name=paste0(phy.name,tax.name)
       
       wtuvk=qpb(pdbs=pdbs,tdbs=tdbs,sig.phy.cut=sig.phy.cut,sig.tax.cut=sig.tax.cut)
       if(is.null(treat)){treat=matrix("All",nrow=length(samp.names),ncol=1);rownames(treat)=samp.names;colnames(treat)="NoGroup"}
-      ckid=match.2col(check.list = list(bin.weight=bin.weight,wtuvk=wtuvk),silent = TRUE)
+      ckid=iCAMP::match.2col(check.list = list(bin.weight=bin.weight,wtuvk=wtuvk),silent = TRUE)
       bin.weight=ckid$bin.weight
       wtuvk=ckid$wtuvk
       wtuvks[[y]]=data.frame(Method=mij.name,wtuvk,stringsAsFactors = FALSE)

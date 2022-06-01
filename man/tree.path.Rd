@@ -35,8 +35,9 @@ Version 1: 2016.2.14
 \code{\link{taxa.binphy.big}},\code{\link{tree.droot}}
 }
 \examples{
-tree=ape::rtree(6)
+data("example.data")
+tree=example.data$tree
 nworker=2 # parallel computing thread number
-tree.path(tree=tree, nworker=nworker, cum="both")
+treepath=tree.path(tree=tree, nworker=nworker)
 }
 \keyword{phylogenetic}

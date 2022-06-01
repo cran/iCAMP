@@ -20,7 +20,9 @@ icamp.big(comm, tree, pd.desc = NULL, pd.spname = NULL, pd.wd = getwd(),
           ses.cut = 1.96, rc.cut = 0.95, conf.cut=0.975,
           omit.option = c("no", "test", "omit"), meta.ab = NULL,
           treepath.file="path.rda", pd.spname.file="pd.taxon.name.csv",
-          pd.backingfile="pd.bin", pd.desc.file="pd.desc")
+          pd.backingfile="pd.bin", pd.desc.file="pd.desc",
+          taxo.metric="bray", transform.method=NULL,
+          logbase=2, dirichlet=FALSE, d.cut.method=c("maxpd","maxdroot"))
 }
 \arguments{
   \item{comm}{matrix or data.frame, community data, each row is a sample or site, each colname is a taxon (a species or OTU or ASV), thus rownames should be sample IDs, colnames should be taxa IDs.}
@@ -58,6 +60,11 @@ icamp.big(comm, tree, pd.desc = NULL, pd.spname = NULL, pd.wd = getwd(),
   \item{pd.spname.file}{character, name of the file saving the taxa IDs, which has exactly the same order as the row names (and column names) of the big phylogenetic distance matrix. it should be a .csv filename.}
   \item{pd.backingfile}{character, the root name for the file for the cache of the big phylogenetic distance matrix. it should be a .bin filename.}
   \item{pd.desc.file}{character, name of the file to hold the backingfile description for the big phylogenetic distance matrix. it should be a .desc filename.}
+  \item{taxo.metric}{taxonomic beta diversity index, the same as 'method' in the function 'vegdist' in package 'vegan', including "manhattan", "euclidean", "canberra", "clark", "bray", "kulczynski", "jaccard", "gower", "altGower", "morisita", "horn", "mountford", "raup", "binomial", "chao", "cao" or "mahalanobis". If taxo.metric='bray' and transform.method=NULL, RC will be calculated based on Bray-Curtis dissimilarity as recommended in original iCAMP; otherwise, unit.sum setting will be ignored.}
+  \item{transform.method}{character or a defined function, to specify how to transform community matrix before calculating dissimilarity. if it is a characher, it should be a method name as in the function 'decostand' in package 'vegan', including 'total','max','freq','normalize','range','standardize','pa','chi.square','cmdscale','hellinger','log'.}
+  \item{logbase}{numeric, the logarithm base used when transform.method='log'.} 
+  \item{dirichlet}{Logic. If TRUE, the taxonomic null model will use Dirichlet distribution to generate relative abundances in randomized community matrix. If the input community matrix has all row sums no more than 1, the function will automatically set dirichlet=TRUE. default is FALSE.}
+  \item{d.cut.method}{character, to specify the method to calculate pd.cut from ds. 'maxpd' means based on maximum phylogenetic distance, pd.cut = (maxpd - ds)/2. 'maxdroot' means based on maximum distance to root, pd.cut = maxdroot - (ds/2), which is preferred if the tree only has one edge from the root.}
 }
 \details{
 This is the main function of iCAMP (Ning et al 2020). Most parameters can use the default settings. 
@@ -86,7 +93,7 @@ The fourth element named state.strict is a matrix, where the 1st column is orgin
 
 The fifth element named state.united is a matrix, where the row numbering is the final bin ID, the 1st column is orginal bin IDs, the 2nd column is the taxa number in each final bin, the 3rd to 5th columns show the maximum, mean, and standard deviation of phylogenetic distances within each final bin.
 }
-\item{SigbMPDi, SigbMPDa, SigbMNTDi, SigbMNTDa, SigBCi, SigBCa}{elements in 'detail', matrixes showing null model significance testing index for each turnover of each bin. In the name of the element(s), SigbMPD, SigMNTD, or SigBC mean the significance testing is based on betaMPD, betaMNTD, or Bray-Curtis; i, within-bin randomization; a, across-bin randomization. In each matrix, the first two columns are sample IDs for each turnover; the 3rd to the last column represent different bins with column names containing the significance testing index name, which can be bNRI, bNTI, RCbMPD, RCbMNTD, CbMPD, CbMNTD, SESbray, RCbray, or CBray as mentioned above.}
+\item{SigbMPDi, SigbMPDa, SigbMNTDi, SigbMNTDa, SigBCi, SigBCa}{elements in 'detail', matrixes showing null model significance testing index for each turnover of each bin. In the name of the element(s), SigbMPD, SigMNTD, or SigBC mean the significance testing is based on betaMPD, betaMNTD, or taxonomic dissimilarity (default is Bray-Curtis); i, within-bin randomization; a, across-bin randomization. In each matrix, the first two columns are sample IDs for each turnover; the 3rd to the last column represent different bins with column names containing the significance testing index name, which can be bNRI, bNTI, RCbMPD, RCbMNTD, CbMPD, CbMNTD, SESbray, RCbray, or CBray as mentioned above.}
 \item{bin.weight}{an element in 'detail', a matrix showing relative abundance of each bin in each pair of samples.}
 \item{processes}{an element in 'detail', a list of process importance results at community level.}
 \item{setting}{an element in 'detail', a data.frame showing all basic settings of this function.}
@@ -111,15 +118,19 @@ Kane, M.J., Emerson, J., Weston, S. (2013). Scalable Strategies for Computing wi
 Daliang Ning
 }
 \note{
+Version 12: 2021.6.4, debug, fix 'arguments imply differing number of rows' issue.
+Version 11: 2021.6.4, add option d.cut.method to handle trees with only one edge from root.
+Version 10: 2021.4.17, add taxo.metric, transform.method, logbase, and dirichlet, to allow community data transform, dissimilar index other than Bray-Curtis, and relative abundances (values < 1) in the input community matrix.
+Version 9: 2021.4.1, revise 'sp.bin==i' to 'sp.bin==bin.lev[i]' to correct error when omit.option='omit' and strict bin IDs are used. Thank adityabandla for finding this bug. see https://github.com/DaliangNing/iCAMP1/issues/9 for details.
 Version 8: 2020.10.15, input comm as data.frame may return error, now include as.matrix to solve it.
 Version 7: 2020.9.21, fix minor bug when output.wd is NULL.
-Version 6: 2020.9.1, remove setwd; add options to specify some file names; change dontrun to donttest and revise save.wd in help doc.
+Version 6: 2020.9.1, remove setwd; add options to specify some file names; change dontrun to donttest and revise folder path in help doc.
 Version 5: 2020.8.19, update help document, add example.
 Version 4: 2020.5.31.
 Version 3: 2019.9.30.
 }
 \seealso{
-\code{\link{qp.bin.js}}
+\code{\link{qp.bin.js}},\code{\link{icamp.cm}}
 }
 \examples{
 data("example.data")
@@ -128,11 +139,11 @@ tree=example.data$tree
 # since need to save some output to a certain folder,
 # the following code is set as 'not test'.
 # but you may test the code on your computer
-# after change the folder path for 'save.wd'.
+# after change the folder path for 'pd.wd'.
 \donttest{
-  save.wd=tempdir() # please change to the folder you want to save the pd.big output.
-  pd.wd=paste0(save.wd,"/pdbig")
-  nworker=4 # parallel computing thread number
+  wd0=getwd() # please change to the folder you want to save the pd.big output.
+  pd.wd=paste0(tempdir(),"/pdbig.icampbig")
+  nworker=2 # parallel computing thread number
   rand.time=20 # usually use 1000 for real data.
   
   bin.size.limit=5 # for real data, usually use a proper number
@@ -141,10 +152,10 @@ tree=example.data$tree
   # our experience is 12, or 24, or 48.
   # but for this example dataset which is too small, have to use 5.
   
-  setwd(save.wd)
   icamp.out=icamp.big(comm=comm,tree=tree,pd.wd=pd.wd,
                       rand=rand.time, nworker=nworker,
                       bin.size.limit=bin.size.limit)
+  setwd(wd0)
 }
 }
 \keyword{main}

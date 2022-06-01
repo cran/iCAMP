@@ -11,7 +11,7 @@ bNTI.big<-function(comm, meta.group=NULL, pd.desc="pd.desc",
     if(utils::memory.limit()<memo.size.GB*1024)
     {
       memotry=try(utils::memory.limit(size=memo.size.GB*1024),silent = TRUE)
-      if(class(memotry)=="try-error"){warning(memotry[1])}
+      if(inherits(memotry,"try-error")){warning(memotry[1])}
     }
   }
   
@@ -92,12 +92,14 @@ bNTI.big<-function(comm, meta.group=NULL, pd.desc="pd.desc",
   
   if(nworker==1)
   {
-    bMNTD.rand=lapply(c1,1:rand,bMNTD.random,permat=permat,pd.desc=pd.desc,
+    bMNTD.rand=lapply(1:rand,bMNTD.random,permat=permat,pd.desc=pd.desc,
                       com=comm,meta.group=meta.group,pd.spname=pd.spname,
                       weighted=weighted,exclude.consp=exclude.consp,
                       pd.wd=pd.wd,trace.seq=trace.seq)
   }else{
-    c1<-parallel::makeCluster(nworker,type="PSOCK")
+    c1<-try(parallel::makeCluster(nworker,type="PSOCK"))
+    if(inherits(c1,"try-error")){c1 <- try(parallel::makeCluster(nworker, setup_timeout = 0.5))}
+    if(inherits(c1,"try-error")){c1 <- parallel::makeCluster(nworker, setup_strategy = "sequential")}
     if(trace) message("Now randomizing by parallel computing. Begin at ", date(),". Please wait...")
     bMNTD.rand<-parallel::parLapply(c1,1:rand,bMNTD.random,permat=permat,pd.desc=pd.desc,
                                     com=comm,meta.group=meta.group,pd.spname=pd.spname,

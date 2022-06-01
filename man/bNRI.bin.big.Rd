@@ -13,7 +13,8 @@ bNRI.bin.big(comm, pd.desc, pd.spname, pd.wd, pdid.bin, sp.bin,
              sig.index=c("SES","Confidence","RC","bNRI"),
              unit.sum = NULL, correct.special = FALSE,
              detail.null=FALSE, special.method=c("MPD","MNTD","both"),
-             ses.cut=1.96,rc.cut=0.95, conf.cut=0.975)
+             ses.cut=1.96,rc.cut=0.95, conf.cut=0.975,
+             dirichlet = FALSE)
 }
 
 \arguments{
@@ -37,6 +38,7 @@ bNRI.bin.big(comm, pd.desc, pd.spname, pd.wd, pdid.bin, sp.bin,
   \item{ses.cut}{numeric, the cutoff of significant standard effect size, default is 1.96.}
   \item{rc.cut}{numeric, the cutoff of significant modified Raup-Crick metric, default is 0.95.}
   \item{conf.cut}{numeric, the cutoff of significant one-side confidence level, default is 0.975.}
+  \item{dirichlet}{Logic. If TRUE, the taxonomic null model for correcting special cases will use Dirichlet distribution to generate relative abundances in randomized community matrix. default is FALSE.}
 }
 \details{
 The beta net relatedness index (betaNRI; Webb et al. 2008, Stegen et al 2012) is calculated for each phylogenetic bin. betaNRI is a standardized measure of the mean pairwise distance between samples/communities (betaMPD). Parallel computing is used to improve the speed.
@@ -73,6 +75,8 @@ Kane, M.J., Emerson, J., Weston, S. (2013). Scalable Strategies for Computing wi
 Daliang Ning
 }
 \note{
+Version 8: 2021.12.9, previous 'paste' led to error; corrected to 'paste0'.
+Version 7: 2021.4.18, fix the bug when detail.null=TRUE and comm has only two samples.
 Version 6: 2020.9.1, remove setwd. change dontrun to donttest and revise save.wd in help doc.
 Version 5: 2020.8.18, update help document, add example.
 Version 4: 2020.8.1, change RC opiton to sig.index, add detail.null and conf.cut.
@@ -97,7 +101,9 @@ sp.bin=example.data$sp.bin
 # but you may test the example on your computer after change the path for 'save.wd'.
 
 \donttest{
-save.wd=tempdir() # please change to the folder you want to save the pd.big output.
+wd0=getwd()
+save.wd=paste0(tempdir(),"/pdbig.bNRI.bin.big")
+# you may change save.wd to the folder you want to save the pd.big output.
 nworker=2 # parallel computing thread number
 pd.big=pdist.big(tree = tree, wd=save.wd, nworker = nworker)
 rand.time=20 # usually use 1000 for real data.
@@ -108,6 +114,7 @@ bNRIbins=bNRI.bin.big(comm=comm, pd.desc=pd.big$pd.file, pd.spname=pd.big$tip.la
                       weighted = TRUE, rand = rand.time, output.bMPD = FALSE,
                       sig.index="SES",unit.sum = NULL, correct.special = TRUE,
                       detail.null=FALSE, special.method="MPD")
+setwd(wd0)
 }
 }
 \keyword{phylogenetic}

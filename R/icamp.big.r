@@ -12,12 +12,21 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                     ses.cut = 1.96,rc.cut = 0.95,conf.cut=0.975,
                     omit.option=c("no","test","omit"),meta.ab=NULL,
                     treepath.file="path.rda", pd.spname.file="pd.taxon.name.csv",
-                    pd.backingfile="pd.bin", pd.desc.file="pd.desc")
+                    pd.backingfile="pd.bin", pd.desc.file="pd.desc",
+                    taxo.metric="bray", transform.method=NULL,
+                    logbase=2, dirichlet=FALSE, d.cut.method=c("maxpd","maxdroot"))
 {
   # v20200725 add sig.index, conf.cut, detail.null
+  # v20210417 add taxo.metric, transform.method, logbase, dirichlet
   comm.old=comm
   comm=as.matrix(comm.old)
   if(sum(comm!=comm.old)>0){stop("Strangely, comm changed after using as.matrix. Please check the comm.")}
+  if(max(rowSums(comm,na.rm = TRUE))<=1 & (!dirichlet))
+  {
+    warning("The values in comm are less than 1, thus considered as proportional data, Dirichlet distribution is used to assign abundance in null model.")
+    dirichlet=TRUE
+  }
+  taxo.name=paste0(toupper(substr(taxo.metric,1,1)),substring(taxo.metric,2))
   
   t1=Sys.time()
   phylo.rand.scale=phylo.rand.scale[1]
@@ -77,22 +86,13 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
   }
   samp.num=nrow(comm)
   
-  if(is.na(pd.cut))
-  {
-    if(is.na(maxpd))
-    {
-      message("Now calculating max phylogenetic distance. ")
-      maxdis=iCAMP::maxbigm(m.desc = pd.desc,m.wd = pd.wd,nworker = nworker,
-                            rm.na=TRUE,size.limit = 10000*10000)
-      maxpd=maxdis$max.value
-    }
-    d.cut=(maxpd-ds)/2
-  }else{d.cut=pd.cut}
+  if(is.na(pd.cut)){d.cut=NULL}else{d.cut=pd.cut}
   
   message("----------Now binning-----------------",date())
   taxabin3=iCAMP::taxa.binphy.big(tree,pd.desc=pd.desc, pd.spname=pd.spname,
                                   pd.wd=pd.wd,outgroup.tip=NA,outgroup.rm=TRUE,
-                                  d.cut=d.cut,bin.size.limit=bin.size.limit,nworker=nworker)
+                                  d.cut=d.cut,ds=ds,bin.size.limit=bin.size.limit,
+                                  nworker=nworker,d.cut.method=d.cut.method)
   gc()
   if(detail.save)
   {
@@ -138,12 +138,14 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
   
   bin.lev=levels(as.factor(sp.bin[,1]))
   bin.num=length(bin.lev)
-  com.bin=lapply(1:bin.num, function(i){comm[,match(rownames(sp.bin)[which(sp.bin==i)],colnames(comm))]})
+  com.bin=lapply(1:bin.num, function(i){comm[,match(rownames(sp.bin)[which(sp.bin==bin.lev[i])],colnames(comm))]})
+  # thanks to adityabandla, I revised sp.bin==i to sp.bin==bin.lev[i], otherwise omit.option='omit' will lead to wrong results.
+  # see https://github.com/DaliangNing/iCAMP1/issues/9 for detailed discussion.
   gc()
-  pdid.bin=lapply(1:bin.num, function(i){match(rownames(sp.bin)[which(sp.bin==i)],pd.spname)})
+  pdid.bin=lapply(1:bin.num, function(i){match(rownames(sp.bin)[which(sp.bin==bin.lev[i])],pd.spname)})
   gc()
   bin.abund=sapply(1:bin.num,function(i){rowSums(com.bin[[i]])})
-  colnames(bin.abund)=paste("bin",1:bin.num,sep = "")
+  colnames(bin.abund)=paste("bin",bin.lev,sep = "")
   
   if(special.method=="depend")
   {
@@ -179,7 +181,7 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                                        sig.index=sig.ind.phy,unit.sum = unit.sum,output.bMPD = detail.null,
                                        correct.special = correct.special,detail.null=detail.null,
                                        special.method=special.method.bNRI,ses.cut=ses.cut,
-                                       rc.cut=rc.cut,conf.cut=conf.cut)
+                                       rc.cut=rc.cut,conf.cut=conf.cut,dirichlet=dirichlet)
                       })
       gc()
       bNRI1=lapply(1:length(bNRI1res),function(i){bNRI1res[[i]]$index})
@@ -216,7 +218,7 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                                        sig.index=sig.ind.phy,unit.sum=unit.sum,output.bMNTD = detail.null,
                                        correct.special = correct.special,detail.null=detail.null,
                                        special.method=special.method.bNTI,ses.cut=ses.cut,
-                                       rc.cut=rc.cut,conf.cut=conf.cut)
+                                       rc.cut=rc.cut,conf.cut=conf.cut,dirichlet=dirichlet)
                       })
       gc()
       bNTI1=lapply(1:length(bNTI1res),function(i){bNTI1res[[i]]$index})
@@ -250,7 +252,7 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                                    rand = rand,output.bMPD=detail.null,sig.index=sig.ind.phy,
                                    unit.sum=unit.sum,correct.special = correct.special,
                                    detail.null=detail.null,special.method=special.method.bNRI,
-                                   ses.cut=ses.cut,rc.cut=rc.cut,conf.cut=conf.cut)
+                                   ses.cut=ses.cut,rc.cut=rc.cut,conf.cut=conf.cut,dirichlet=dirichlet)
       if(sig.ind.phy=="Confidence"){objname="CbMPDa"}else if(sig.ind.phy=="SES"){objname="bNRIa"}else if(sig.ind.phy=="RC"){objname="RCbMPDa"}
       bNRI2.m=iCAMP::dist.bin.3col(bNRI2res$index, obj.name = objname)
       if(detail.save){detail$SigbMPDa=bNRI2.m}
@@ -270,7 +272,7 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                                    rand = rand,output.bMNTD = detail.null,sig.index=sig.ind.phy,
                                    unit.sum=unit.sum,correct.special = correct.special,
                                    detail.null=detail.null,special.method=special.method.bNTI,
-                                   ses.cut=ses.cut,rc.cut=rc.cut,conf.cut=conf.cut)
+                                   ses.cut=ses.cut,rc.cut=rc.cut,conf.cut=conf.cut,dirichlet=dirichlet)
       if(sig.ind.phy=="Confidence"){objname="CbMNTDa"}else if(sig.ind.phy=="SES"){objname="bNTIa"}else if(sig.ind.phy=="RC"){objname="RCbMNTDa"}
       bNTI2.m=iCAMP::dist.bin.3col(bNTI2res$index, obj.name = objname)
       if(detail.save){detail$SigbMNTDa=bNTI2.m}
@@ -295,10 +297,12 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                                  nworker = nworker,memory.G = memory.G,
                                  unit.sum = unit.sum,meta.ab = meta.ab,
                                  sig.index=sig.ind.tax,detail.null=detail.null,
-                                 output.bray=detail.null)
+                                 output.bray=detail.null,taxo.metric=taxo.metric,
+                                 transform.method=transform.method, logbase=logbase,
+                                 dirichlet=dirichlet)
                   })
     RC1=lapply(1:length(RC1res),function(i){RC1res[[i]]$index})
-    if(sig.ind.tax=="Confidence"){objname="Cbrayi"}else if(sig.ind.tax=="SES"){objname="SESbrayi"}else if(sig.ind.tax=="RC"){objname="RCbrayi"}
+    if(sig.ind.tax=="Confidence"){objname=paste0("C",taxo.metric,"i")}else if(sig.ind.tax=="SES"){objname=paste0("SES",taxo.metric,"i")}else if(sig.ind.tax=="RC"){objname=paste0("RC",taxo.metric,"i")}
     RC1.m=iCAMP::dist.bin.3col(RC1, obj.name = objname)
     if(detail.save){detail$SigBCi=RC1.m}
     if(detail.null)
@@ -316,8 +320,10 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                               memory.G = memory.G,big.method = big.method,
                               unit.sum = unit.sum,meta.ab=meta.ab,
                               sig.index=sig.ind.tax,detail.null=detail.null,
-                              output.bray=detail.null)
-    if(sig.ind.tax=="Confidence"){objname="Cbraya"}else if(sig.ind.tax=="SES"){objname="SESbraya"}else if(sig.ind.tax=="RC"){objname="RCbraya"}
+                              output.bray=detail.null,taxo.metric=taxo.metric,
+                              transform.method=transform.method, logbase=logbase,
+                              dirichlet=dirichlet)
+    if(sig.ind.tax=="Confidence"){objname=paste0("C",taxo.metric,"a")}else if(sig.ind.tax=="SES"){objname=paste0("SES",taxo.metric,"a")}else if(sig.ind.tax=="RC"){objname=paste0("RC",taxo.metric,"a")}
     RC2.m=iCAMP::dist.bin.3col(RC2res$index, obj.name = objname)
     if(detail.save){detail$SigBCa=RC2.m}
     if(detail.null)
@@ -334,7 +340,7 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
   com.samp.sum=rowSums(comm)
   bin.weight[,3:(bin.num+2)]=((bin.abund[match(bin.weight[,1],rownames(bin.abund)),]/com.samp.sum[match(bin.weight[,1],rownames(comm))])
                               +(bin.abund[match(bin.weight[,2],rownames(bin.abund)),]/com.samp.sum[match(bin.weight[,2],rownames(comm))]))/2
-  colnames(bin.weight)=c("samp1","samp2",paste("bin",1:bin.num,sep = ""))
+  colnames(bin.weight)=c("samp1","samp2",paste("bin",bin.lev,sep = ""))
   if(detail.save){detail$bin.weight=bin.weight}
   
   # 8 # processes
@@ -352,7 +358,7 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                                bin.weight=bin.weight, sig.phy.cut=sig.phy.cut, 
                                sig.phy2.cut=sig.phy2.cut, sig.tax.cut=sig.tax.cut,
                                check.name=FALSE)
-      if(sig.index=="Confidence"){methodname="CbMPDiCBrayi"}else if(sig.index=="SES.RC"){methodname="bNRIiRCi"}else if(sig.index=="SES"){methodname="bNRIiSESbrayi"}else if(sig.index=="RC"){"RCbMPDiRCbrayi"}
+      if(sig.index=="Confidence"){methodname=paste0("CbMPDiC",taxo.name,"i")}else if(sig.index=="SES.RC"){methodname="bNRIiRCi"}else if(sig.index=="SES"){methodname=paste0("bNRIiSES",taxo.metric,"i")}else if(sig.index=="RC"){methodname=paste0("RCbMPDiRC",taxo.metric,"i")}
       res=c(res,list(qp.R1R1))
       names(res)[length(res)]=methodname
       if(qp.save){utils::write.csv(qp.R1R1,file = paste0(output.wd,"/", paste(c(prefix,"process",methodname,"csv"),collapse = ".")))}
@@ -363,7 +369,7 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                                bin.weight=bin.weight, sig.phy.cut=sig.phy.cut, 
                                sig.phy2.cut=sig.phy2.cut, sig.tax.cut=sig.tax.cut,
                                check.name=FALSE)
-      if(sig.index=="Confidence"){methodname="CbMNTDiCBrayi"}else if(sig.index=="SES.RC"){methodname="bNTIiRCi"}else if(sig.index=="SES"){methodname="bNTIiSESbrayi"}else if(sig.index=="RC"){"RCbMNTDiRCbrayi"}
+      if(sig.index=="Confidence"){methodname=paste0("CbMNTDiC",taxo.name,"i")}else if(sig.index=="SES.RC"){methodname="bNTIiRCi"}else if(sig.index=="SES"){methodname=paste0("bNTIiSES",taxo.metric,"i")}else if(sig.index=="RC"){methodname=paste0("RCbMNTDiRC",taxo.metric,"i")}
       res=c(res,list(qp.T1R1))
       names(res)[length(res)]=methodname
       if(qp.save){utils::write.csv(qp.T1R1,file = paste0(output.wd,"/", paste(c(prefix,"process",methodname,"csv"),collapse = ".")))}
@@ -374,7 +380,7 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                                 bin.weight=bin.weight, sig.phy.cut=sig.phy.cut, 
                                 sig.phy2.cut=sig.phy2.cut, sig.tax.cut=sig.tax.cut,
                                 check.name=FALSE)
-      if(sig.index=="Confidence"){methodname="CbMNTDMPDiCBrayi"}else if(sig.index=="SES.RC"){methodname="bNTINRIiRCi"}else if(sig.index=="SES"){methodname="bNTINRIiSESbrayi"}else if(sig.index=="RC"){"RCbMNTDMPDiRCbrayi"}
+      if(sig.index=="Confidence"){methodname=paste0("CbMNTDMPDiC",taxo.name,"i")}else if(sig.index=="SES.RC"){methodname="bNTINRIiRCi"}else if(sig.index=="SES"){methodname=paste0("bNTINRIiSES",taxo.metric,"i")}else if(sig.index=="RC"){methodname=paste0("RCbMNTDMPDiRC",taxo.metric,"i")}
       res=c(res,list(qp.TR1R1))
       names(res)[length(res)]=methodname
       if(qp.save){utils::write.csv(qp.TR1R1,file = paste0(output.wd,"/", paste(c(prefix,"process",methodname,"csv"),collapse = ".")))}
@@ -389,7 +395,7 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                                bin.weight=bin.weight, sig.phy.cut=sig.phy.cut, 
                                sig.phy2.cut=sig.phy2.cut, sig.tax.cut=sig.tax.cut,
                                check.name=FALSE)
-      if(sig.index=="Confidence"){methodname="CbMPDiCBraya"}else if(sig.index=="SES.RC"){methodname="bNRIiRCa"}else if(sig.index=="SES"){methodname="bNRIiSESbraya"}else if(sig.index=="RC"){"RCbMPDiRCbraya"}
+      if(sig.index=="Confidence"){methodname=paste0("CbMPDiC",taxo.name,"a")}else if(sig.index=="SES.RC"){methodname="bNRIiRCa"}else if(sig.index=="SES"){methodname=paste0("bNRIiSES",taxo.metric,"a")}else if(sig.index=="RC"){methodname=paste0("RCbMPDiRC",taxo.metric,"a")}
       res=c(res,list(qp.R1R2))
       names(res)[length(res)]=methodname
       if(qp.save){utils::write.csv(qp.R1R2,file = paste0(output.wd,"/", paste(c(prefix,"process",methodname,"csv"),collapse = ".")))}
@@ -400,7 +406,7 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                                bin.weight=bin.weight, sig.phy.cut=sig.phy.cut, 
                                sig.phy2.cut=sig.phy2.cut, sig.tax.cut=sig.tax.cut,
                                check.name=FALSE)
-      if(sig.index=="Confidence"){methodname="CbMNTDiCBraya"}else if(sig.index=="SES.RC"){methodname="bNTIiRCa"}else if(sig.index=="SES"){methodname="bNTIiSESbraya"}else if(sig.index=="RC"){"RCbMNTDiRCbraya"}
+      if(sig.index=="Confidence"){methodname=paste0("CbMNTDiC",taxo.name,"a")}else if(sig.index=="SES.RC"){methodname="bNTIiRCa"}else if(sig.index=="SES"){methodname=paste0("bNTIiSES",taxo.metric,"a")}else if(sig.index=="RC"){methodname=paste0("RCbMNTDiRC",taxo.metric,"a")}
       res=c(res,list(qp.T1R2))
       names(res)[length(res)]=methodname
       if(qp.save){utils::write.csv(qp.T1R2,file = paste0(output.wd,"/", paste(c(prefix,"process",methodname,"csv"),collapse = ".")))}
@@ -411,7 +417,7 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                                 bin.weight=bin.weight, sig.phy.cut=sig.phy.cut, 
                                 sig.phy2.cut=sig.phy2.cut, sig.tax.cut=sig.tax.cut,
                                 check.name=FALSE)
-      if(sig.index=="Confidence"){methodname="CbMNTDMPDiCBraya"}else if(sig.index=="SES.RC"){methodname="bNTINRIiRCa"}else if(sig.index=="SES"){methodname="bNTINRIiSESbraya"}else if(sig.index=="RC"){"RCbMNTDMPDiRCbraya"}
+      if(sig.index=="Confidence"){methodname=paste0("CbMNTDMPDiC",taxo.name,"a")}else if(sig.index=="SES.RC"){methodname="bNTINRIiRCa"}else if(sig.index=="SES"){methodname=paste0("bNTINRIiSES",taxo.metric,"a")}else if(sig.index=="RC"){methodname=paste0("RCbMNTDMPDiRC",taxo.metric,"a")}
       res=c(res,list(qp.TR1R2))
       names(res)[length(res)]=methodname
       if(qp.save){utils::write.csv(qp.TR1R2,file = paste0(output.wd,"/", paste(c(prefix,"process",methodname,"csv"),collapse = ".")))}
@@ -426,7 +432,7 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                                bin.weight=bin.weight, sig.phy.cut=sig.phy.cut, 
                                sig.phy2.cut=sig.phy2.cut, sig.tax.cut=sig.tax.cut,
                                check.name=FALSE)
-      if(sig.index=="Confidence"){methodname="CbMPDaCBrayi"}else if(sig.index=="SES.RC"){methodname="bNRIaRCi"}else if(sig.index=="SES"){methodname="bNRIaSESbrayi"}else if(sig.index=="RC"){"RCbMPDaRCbrayi"}
+      if(sig.index=="Confidence"){methodname=paste0("CbMPDaC",taxo.name,"i")}else if(sig.index=="SES.RC"){methodname="bNRIaRCi"}else if(sig.index=="SES"){methodname=paste0("bNRIaSES",taxo.metric,"i")}else if(sig.index=="RC"){methodname=paste0("RCbMPDaRC",taxo.metric,"i")}
       res=c(res,list(qp.R2R1))
       names(res)[length(res)]=methodname
       if(qp.save){utils::write.csv(qp.R2R1,file = paste0(output.wd,"/", paste(c(prefix,"process",methodname,"csv"),collapse = ".")))}
@@ -437,7 +443,7 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                                bin.weight=bin.weight, sig.phy.cut=sig.phy.cut, 
                                sig.phy2.cut=sig.phy2.cut, sig.tax.cut=sig.tax.cut,
                                check.name=FALSE)
-      if(sig.index=="Confidence"){methodname="CbMNTDaCBrayi"}else if(sig.index=="SES.RC"){methodname="bNTIaRCi"}else if(sig.index=="SES"){methodname="bNTIaSESbrayi"}else if(sig.index=="RC"){"RCbMNTDaRCbrayi"}
+      if(sig.index=="Confidence"){methodname=paste0("CbMNTDaC",taxo.name,"i")}else if(sig.index=="SES.RC"){methodname="bNTIaRCi"}else if(sig.index=="SES"){methodname=paste0("bNTIaSES",taxo.metric,"i")}else if(sig.index=="RC"){methodname=paste0("RCbMNTDaRC",taxo.metric,"i")}
       res=c(res,list(qp.T2R1))
       names(res)[length(res)]=methodname
       if(qp.save){utils::write.csv(qp.T2R1,file = paste0(output.wd,"/", paste(c(prefix,"process",methodname,"csv"),collapse = ".")))}
@@ -448,7 +454,7 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                                 bin.weight=bin.weight, sig.phy.cut=sig.phy.cut, 
                                 sig.phy2.cut=sig.phy2.cut, sig.tax.cut=sig.tax.cut,
                                 check.name=FALSE)
-      if(sig.index=="Confidence"){methodname="CbMNTDMPDaCBrayi"}else if(sig.index=="SES.RC"){methodname="bNTINRIaRCi"}else if(sig.index=="SES"){methodname="bNTINRIaSESbrayi"}else if(sig.index=="RC"){"RCbMNTDMPDaRCbrayi"}
+      if(sig.index=="Confidence"){methodname=paste0("CbMNTDMPDaC",taxo.name,"i")}else if(sig.index=="SES.RC"){methodname="bNTINRIaRCi"}else if(sig.index=="SES"){methodname=paste0("bNTINRIaSES",taxo.metric,"i")}else if(sig.index=="RC"){methodname=paste0("RCbMNTDMPDaRC",taxo.metric,"i")}
       res=c(res,list(qp.TR2R1))
       names(res)[length(res)]=methodname
       if(qp.save){utils::write.csv(qp.TR2R1,file = paste0(output.wd,"/", paste(c(prefix,"process",methodname,"csv"),collapse = ".")))}
@@ -464,7 +470,7 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                                bin.weight=bin.weight, sig.phy.cut=sig.phy.cut, 
                                sig.phy2.cut=sig.phy2.cut, sig.tax.cut=sig.tax.cut,
                                check.name=FALSE)
-      if(sig.index=="Confidence"){methodname="CbMPDaCBraya"}else if(sig.index=="SES.RC"){methodname="bNRIaRCa"}else if(sig.index=="SES"){methodname="bNRIaSESbraya"}else if(sig.index=="RC"){"RCbMPDaRCbraya"}
+      if(sig.index=="Confidence"){methodname=paste0("CbMPDaC",taxo.name,"a")}else if(sig.index=="SES.RC"){methodname="bNRIaRCa"}else if(sig.index=="SES"){methodname=paste0("bNRIaSES",taxo.metric,"a")}else if(sig.index=="RC"){methodname=paste0("RCbMPDaRC",taxo.metric,"a")}
       res=c(res,list(qp.R2R2))
       names(res)[length(res)]=methodname
       if(qp.save){utils::write.csv(qp.R2R2,file = paste0(output.wd,"/", paste(c(prefix,"process",methodname,"csv"),collapse = ".")))}
@@ -475,7 +481,7 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                                bin.weight=bin.weight, sig.phy.cut=sig.phy.cut, 
                                sig.phy2.cut=sig.phy2.cut, sig.tax.cut=sig.tax.cut,
                                check.name=FALSE)
-      if(sig.index=="Confidence"){methodname="CbMNTDaCBraya"}else if(sig.index=="SES.RC"){methodname="bNTIaRCa"}else if(sig.index=="SES"){methodname="bNTIaSESbraya"}else if(sig.index=="RC"){"RCbMNTDaRCbraya"}
+      if(sig.index=="Confidence"){methodname=paste0("CbMNTDaC",taxo.name,"a")}else if(sig.index=="SES.RC"){methodname="bNTIaRCa"}else if(sig.index=="SES"){methodname=paste0("bNTIaSES",taxo.metric,"a")}else if(sig.index=="RC"){methodname=paste0("RCbMNTDaRC",taxo.metric,"a")}
       res=c(res,list(qp.T2R2))
       names(res)[length(res)]=methodname
       if(qp.save){utils::write.csv(qp.T2R2,file = paste0(output.wd,"/", paste(c(prefix,"process",methodname,"csv"),collapse = ".")))}
@@ -486,7 +492,7 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                                 bin.weight=bin.weight, sig.phy.cut=sig.phy.cut, 
                                 sig.phy2.cut=sig.phy2.cut, sig.tax.cut=sig.tax.cut,
                                 check.name=FALSE)
-      if(sig.index=="Confidence"){methodname="CbMNTDMPDaCBraya"}else if(sig.index=="SES.RC"){methodname="bNTINRIaRCa"}else if(sig.index=="SES"){methodname="bNTINRIaSESbraya"}else if(sig.index=="RC"){"RCbMNTDMPDaRCbraya"}
+      if(sig.index=="Confidence"){methodname=paste0("CbMNTDMPDaC",taxo.name,"a")}else if(sig.index=="SES.RC"){methodname="bNTINRIaRCa"}else if(sig.index=="SES"){methodname=paste0("bNTINRIaSES",taxo.metric,"a")}else if(sig.index=="RC"){methodname=paste0("RCbMNTDMPDaRC",taxo.metric,"a")}
       res=c(res,list(qp.TR2R2))
       names(res)[length(res)]=methodname
       if(qp.save){utils::write.csv(qp.TR2R2,file = paste0(output.wd,"/", paste(c(prefix,"process",methodname,"csv"),collapse = ".")))}
@@ -497,6 +503,7 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
     detail$processes=res
     if(is.null(unit.sum)){unit.sum.sv="asNULL"}else{unit.sum.sv=mean(unit.sum)}
     if(is.null(output.wd)){output.wdout="Not_Specified"}else{output.wdout=output.wd}
+    if(is.null(transform.method)){transform.method=NA}
     detail$setting=data.frame(ds=ds, pd.cut=pd.cut, max.pd=maxpd, sp.check=sp.check,
                               phylo.rand.scale=phylo.rand.scale,taxa.rand.scale=taxa.rand.scale,
                               phylo.metric=phylo.metric,sig.index=sig.index,bin.size.limit=bin.size.limit,nworker=nworker,memory.G=memory.G,
@@ -504,7 +511,8 @@ icamp.big<-function(comm,tree,pd.desc=NULL, pd.spname=NULL, pd.wd=getwd(),
                               output.wd=output.wdout,correct.special=correct.special,
                               unit.sum.mean=unit.sum.sv,special.method=special.method,
                               ses.cut = ses.cut,rc.cut = rc.cut,conf.cut=conf.cut,
-                              omit.option=omit.option[1],time=format(Sys.time()-t1))
+                              omit.option=omit.option[1],taxo.metric=taxo.metric, transform.method=transform.method,
+                              logbase=logbase, dirichlet=dirichlet,time=format(Sys.time()-t1))
     detail$comm=comm
     res=c(res,list(detail=detail))
   }

@@ -13,7 +13,9 @@ qpen(comm = NULL, pd = NULL, pd.big.wd = NULL,
      meta.ab = NULL, exclude.conspecifics = FALSE,
      rand.time = 1000, sig.bNTI = 1.96, sig.rc = 0.95,
      nworker = 4, memory.G = 50, project = NA,
-     wd = getwd(), output.detail = FALSE, save.bNTIRC = FALSE)
+     wd = getwd(), output.detail = FALSE, save.bNTIRC = FALSE,
+     taxo.metric = "bray", transform.method = NULL,
+     logbase = 2, dirichlet = FALSE)
 }
 \arguments{
   \item{comm}{matrix or data.frame, community data, each row is a sample or site, each colname is a taxon (species or OTU or ASV), thus rownames should be sample IDs, colnames should be taxa IDs.}
@@ -35,6 +37,10 @@ qpen(comm = NULL, pd = NULL, pd.big.wd = NULL,
   \item{wd}{a folder path, where the files will be saved.}
   \item{output.detail}{logic, if TRUE, some detailed results including all null values will be output.}
   \item{save.bNTIRC}{logic, if TRUE, a file will be saved in the folder specified by wd.}
+  \item{taxo.metric}{taxonomic beta diversity index, the same as 'method' in the function 'vegdist' in package 'vegan', including "manhattan", "euclidean", "canberra", "clark", "bray", "kulczynski", "jaccard", "gower", "altGower", "morisita", "horn", "mountford", "raup", "binomial", "chao", "cao" or "mahalanobis". If taxo.metric='bray' and transform.method=NULL, RC will be calculated based on Bray-Curtis dissimilarity as recommended in original iCAMP; otherwise, unit.sum setting will be ignored.}
+  \item{transform.method}{character or a defined function, to specify how to transform community matrix before calculating taxonomic dissimilarity. Due to the definition of the phylogenetic dissimilarity (bMNTD), it is not affected by data transformation. If transform.method is a characher, it should be a method name as in the function 'decostand' in package 'vegan', including 'total','max','freq','normalize','range','standardize','pa','chi.square','cmdscale','hellinger','log'.}
+  \item{logbase}{numeric, the logarithm base used when transform.method='log'.} 
+  \item{dirichlet}{Logic. If TRUE, the taxonomic null model will use Dirichlet distribution to generate relative abundances in randomized community matrix. If the input community matrix has all row sums no more than 1, the function will automatically set dirichlet=TRUE. default is FALSE.}
 }
 \details{
 This method is developed by Dr. James Stegen (2013 and 2015), from which we developed iCAMP. In all pairwised comparisons between samples/communities, the non-random phylogenetic turnovers recognized by phylogeny shuffle were counted as influence of environment selection (betaNTI>1.96 or <-1.96), and the non-random taxonomic turnovers in the rest pairwised comparisons were counted as influence of dispersal limitation (RCbray>0.95) or homogenizing dispersal (RCbray<-0.95). The rest part is called undominated. Please read the references for details.
@@ -65,6 +71,7 @@ Kane, M.J., Emerson, J., & Weston, S. (2013). Scalable Strategies for Computing 
 Daliang Ning
 }
 \note{
+Version 7: 2021.4.18, add taxo.metric, transform.method, logbase, and dirichlet, to allow community data transform, dissimilar index other than Bray-Curtis, and relative abundances (values < 1) in the input community matrix.
 Version 6: 2020.12.5, use function bNTI.big to calculate betaNTI, which use bigmemory better.
 Version 5: 2020.9.1, remove setwd; change dontrun to donttest and revise save.wd in help doc.
 Version 4: 2020.8.21, update help document, add example.
@@ -85,6 +92,7 @@ tree=example.data$tree
 # but you may test the code on your computer
 # after change the folder path for 'save.wd'.
 \donttest{
+  wd0=getwd()
   nworker=2 # parallel computing thread number
   rand.time=5 # usually use 1000 for real data.
   
@@ -94,12 +102,14 @@ tree=example.data$tree
           rand.time=rand.time,nworker=nworker)
   
   # for a big dataset, pdist.big may be used
-  save.wd=tempdir() # please change to the folder you want to save the pd.big output.
+  save.wd=paste0(tempdir(),"/pdbig.qpen")
+  # please change to the folder you want to save the pd.big output.
+  
   pd.big=pdist.big(tree = tree, wd=save.wd, nworker = nworker)
   qp2=qpen(comm=comm, pd=pd.big$pd.file, pd.big.wd=pd.big$pd.wd,
            pd.big.spname=pd.big$tip.label, tree=tree,
            rand.time=rand.time, nworker=nworker)
+  setwd(wd0)
 }
 }
-\keyword{Other methods}% use one of  RShowDoc("KEYWORDS")
-
+\keyword{Other methods}

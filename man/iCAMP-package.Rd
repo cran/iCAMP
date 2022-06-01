@@ -20,13 +20,37 @@ Version 1.3.1: add bNTI.big and bMNTD.big, and revise qpen to handle big dataset
 Version 1.3.2: revise icamp.bins to fix error when an input taxonomy name has unrecognizable character; revise icamp.boot to fix error when there is no outlier.
 Version 1.3.3: add icamp.cate to summary for each category of taxa, e.g. core versus rare taxa.
 Version 1.3.4: typo and format.
+Version 1.3.5: revise icamp.big to correct error when using strict bin IDs when omit small bins.
+Version 1.4.1: add function 'qpen.test' for bootstrapping test on 'qpen' results.
+Version 1.4.2: add options in icamp.big, RC.pc, and RC.bin.bigc to allow relative abundances (value < 1) in community matrix, community data transformation, and use of other taxonomic dissimilarity indexes.
+Version 1.4.3: debug to allow input community matrix only has two samples. Also provide a temporary solution for the failure of makeCluster in some OS.
+Version 1.4.4: debug ps.bin and icamp.cate to avoid error in special cases.
+Version 1.4.5: add option to taxa.binphy.big and icamp.big to handle trees with single edge from root.
+Version 1.4.6: debug icamp.big, fix 'differing number of rows' issue in version 1.4.2 to 1.4.5.
+Version 1.4.7: speed up qpen.test when there are numerous between-group comparisons.
+Version 1.4.8: fix a bug in function taxa.binphy.big.
+Version 1.4.9: internal version.
+Version 1.4.10: fix a potential bug in function maxbigm.
+Version 1.4.11: debug for function icamp.boot.
+Version 1.5.1: add functions qpen.cm, RC.cm, bNTI.cm, and bNTI.big.cm, to deal with samples from multiple metacommunities.
+Version 1.5.2: add functions icamp.cm, NTI.cm, NRI.cm, bNRI.cm, bNTI.bin.cm, bNRI.bin.cm, and RC.bin.cm, to deal with samples from multiple metacommunities.
+Version 1.5.3(20210924): add function pdist.p to calculate phylogenetic distance for relatively small datasets.
+Version 1.5.4(20211209): correct 'paste' error in functions bNRI.bin.big and bNRI.bin.cm.
+Version 1.5.5(20220210): add icamp.cm2 function to allow different metacommunity settings for taxonomic and phylogenetic null models.
+Version 1.5.6(20220410): fix error and warnings from package check.
+Version 1.5.7(20220410): fix notes from package check.
+Version 1.5.8(20220421): fix error when nworker=1 in several functions.
+Version 1.5.9(20220421): fix error in function bNTI.bin.cm.
+Version 1.5.10(20220425): correct parallel thread number in examples.
+Version 1.5.11(20220426): fix error in special cases in fucntion bNTI.bin.cm.
+Version 1.5.12(20220529): fix warnings due to working directory issues of some examples in help documents.
 }
 \details{
 \tabular{ll}{
 Package: \tab iCAMP\cr
 Type: \tab Package\cr
-Version: \tab 1.3.4\cr
-Date: \tab 2021-1-8\cr
+Version: \tab 1.5.12\cr
+Date: \tab 2022-5-29\cr
 License: \tab GPL-2\cr
 }
 }
@@ -52,9 +76,9 @@ tree=example.data$tree
 # but you may test the code on your computer
 # after change the path for 'save.wd'.
 \donttest{
-  save.wd=tempdir() # please change to the folder you want to save the pd.big output.
-  pd.wd=paste0(save.wd,"/pdbig")
-  nworker=4 # parallel computing thread number
+  wd0=getwd() # please change to the folder you want to save the pd.big output.
+  save.wd=paste0(tempdir(),"/pdbig")
+  nworker=2 # parallel computing thread number
   rand.time=20 # usually use 1000 for real data.
   
   bin.size.limit=5 # for real data, usually use a proper number
@@ -63,9 +87,9 @@ tree=example.data$tree
   # our experience is 12, or 24, or 48.
   # but for this example dataset which is too small, have to use 5.
   
-  setwd(save.wd)
-  icamp.out=icamp.big(comm=comm,tree=tree,pd.wd=pd.wd,
+  icamp.out=icamp.big(comm=comm,tree=tree,pd.wd=save.wd,
                       rand=rand.time, nworker=nworker,
                       bin.size.limit=bin.size.limit)
+  setwd(wd0)
 }
 }

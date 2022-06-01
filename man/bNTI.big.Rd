@@ -37,10 +37,10 @@ In the output of betaNTI, the diagonal are set as zero. If the randomized result
 \value{
 If output.detail=FALSE (default), a matrix of betaNTI values (if RC=FALSE) or RC values (if RC=TRUE) is returned. If output.detail=TRUE, a list is returned.
 
-bNTI: a matrix of pairwise betaNTI values;
-RC.bMNTD: a matrix of RC values based on null model test of betaMNTD;
-bMNTD: observed betaMNTD values;
-bMNTD.rand: a matrix of all null results;
+\item{bNTI}{a matrix of pairwise betaNTI values.}
+\item{RC.bMNTD}{a matrix of RC values based on null model test of betaMNTD. Ouput when RC=TRUE.}
+\item{bMNTD}{observed betaMNTD values.}
+\item{bMNTD.rand}{a matrix of all null results.}
 }
 \references{
 Webb, C.O., Ackerly, D.D. & Kembel, S.W. (2008). Phylocom: software for the analysis of phylogenetic community structure and trait evolution. Bioinformatics, 24, 2098-2100.
@@ -68,15 +68,19 @@ tree=example.data$tree
 # the following code is set as 'not test'.
 # but you may test the code on your computer after change the path for 'save.wd'.
 \donttest{
-save.wd=tempdir() # please change to the folder you want to save the pd.big output.
+wd0=getwd()
+save.wd=paste0(tempdir(),"/pdbig.bNTI.big")
+# you may change save.wd to the folder you want to save the pd.big output.
 nworker=2 # parallel computing thread number
 pd.big=pdist.big(tree = tree, wd=save.wd, nworker = nworker)
+
 rand.time=20 # usually use 1000 for real data.
 bNTI=bNTI.big(comm=comm, pd.desc=pd.big$pd.file,
               pd.spname=pd.big$tip.label,pd.wd=pd.big$pd.wd,
               spname.check=TRUE, nworker=nworker, memo.size.GB=50,
               weighted=TRUE, exclude.consp=FALSE,rand=rand.time,
               output.dtail=FALSE, RC=FALSE, trace=TRUE)
+setwd(wd0)
 }
 }
 \keyword{phylogenetic}
